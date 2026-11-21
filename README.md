@@ -1,8 +1,13 @@
 # Brewlet agents
 
-[GitHub Copilot SDK](https://github.com/github/copilot-sdk) agents in Java, Node.js, Python and
+[Microsoft Copilot SDK](https://github.com/microsoft/copilot-sdk) agents in Java, Node.js, Python and
 .NET, deployed to a local Kubernetes cluster (`kind`) with [Brewlet](https://github.com/microsoft/brewlet),
 and documented end to end for demos, blog posts, videos and workshops.
+
+The agents use the Microsoft SDK packages: `com.microsoft:copilot-sdk` (Java),
+`@microsoft/copilot-sdk` (Node.js), `microsoft-copilot-sdk` (Python) and `Microsoft.Copilot.SDK` (.NET).
+The separate [Copilot CLI](https://github.com/github/copilot-cli) sidecar still comes from
+`github/copilot-cli`; it is not the SDK dependency.
 
 The point of the project is **who owns what**. Brewlet lets the Ops team own the language runtime,
 so an agent's deployable is only its own code:

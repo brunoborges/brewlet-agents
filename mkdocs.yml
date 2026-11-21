@@ -1,5 +1,5 @@
 site_name: Brewlet agents
-site_description: GitHub Copilot SDK agents in Java, Node.js, Python and .NET, deployed to a local Brewlet-enabled Kubernetes cluster with kind.
+site_description: Microsoft Copilot SDK agents in Java, Node.js, Python and .NET, deployed to a local Brewlet-enabled Kubernetes cluster with kind.
 site_url: https://brunoborges.github.io/brewlet-agents/
 repo_url: https://github.com/brunoborges/brewlet-agents
 repo_name: brunoborges/brewlet-agents
