@@ -1,0 +1,7 @@
+# Documentation toolchain, the same release that 'make docs' runs in Docker when mkdocs is not
+# installed (MKDOCS_MATERIAL_VERSION in versions.env; scripts/check.sh keeps the two in step).
+#
+#   python3 -m venv .venv && . .venv/bin/activate && pip install -r docs/requirements.txt
+mkdocs-material==9.8.2
+mkdocs==1.6.1
+pymdown-extensions==13.1
