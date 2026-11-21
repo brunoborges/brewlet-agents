@@ -23,7 +23,7 @@
 | `make publish AGENT=…` | Pushes the artifact, verifies it and records its digest. |
 | `make layers AGENT=…` | Shows the pushed artifact's layers and their compressed sizes. |
 | `make footprint [AGENT=…]` | The artifact size and the memory each container of the deployed agents uses right now. |
-| `make deploy AGENT=…` | Renders the manifest and applies it. |
+| `make deploy AGENT=…` | Applies the agent's `deployment.yaml` with its images pinned to the published digests. |
 | `make smoke AGENT=…` | The contract checks, through a port-forward. `REQUIRE_AUTH=1` makes the live model call mandatory. |
 | `make agent AGENT=…` | The four above, in order. |
 | `make undeploy AGENT=…` | Removes the agent from the cluster. |
@@ -53,7 +53,7 @@
 
 * `versions.env` and the runtime catalog are complete;
 * every agent has a valid `agent.env`, a `launch.json` that lists its runtime, a system prompt
-  identical to the reference one, and a manifest that renders;
+  identical to the reference one, and a `deployment.yaml` that agrees with `agent.env` and `versions.env`;
 * every agent has a README and a docs page that renders it, and `mkdocs.yml` lists them;
 * every workflow parses, every script passes `bash -n` and, where ShellCheck is installed, ShellCheck;
 * the documentation toolchain pin in `docs/requirements.txt` matches `versions.env`, and every page
@@ -74,7 +74,7 @@ All of them are plain Bash (compatible with the Bash 3.2 that macOS ships) and p
 | `sidecar-build.sh` | Builds the Copilot CLI sidecar image. |
 | `integrations-build.sh`, `integrations/<language>.sh`, `mvn.sh` | Build the pinned `copilot-sdk-integrations` for a language. |
 | `agent-build.sh`, `agent-publish.sh` | Source to a verified, digest-addressed artifact. |
-| `agent-render.sh`, `agent-deploy.sh`, `agent-undeploy.sh` | The manifest and its lifecycle. |
+| `agent-pin.sh`, `agent-deploy.sh`, `agent-undeploy.sh` | The manifest's image pinning and its lifecycle. |
 | `agent-smoke.sh`, `agent-ask.sh`, `agent-layers.sh`, `agent-inspect.sh`, `footprint.sh` | Talk to a deployed agent through a port-forward; show what a published artifact and a deployed Pod are made of; measure what the agents cost. |
 | `copilot-auth.sh` | Stores or removes the GitHub token. |
 | `demo-rotation.sh` | The rotation demo. |

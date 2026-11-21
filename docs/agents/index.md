@@ -25,8 +25,9 @@ language, which talks to the Copilot CLI sidecar and never bundles it.
 
 ## What is the same
 
-* **The Pod.** One manifest template, `deploy/agent.yaml.tmpl`, renders all eight: the agent container on
-  its runtime, the Copilot CLI as a native sidecar, the same security settings and probes.
+* **The Pod.** Each agent carries its own complete `deployment.yaml`, and all eight have the same shape:
+  the agent container on its runtime, the Copilot CLI as a native sidecar, the same security settings
+  and probes. Only the names, the runtime and the resources differ.
 * **The artifact.** Two layers plus the launch description: `deps` (all the libraries), `code` (the
   agent's own bytes) and `launch.json`. No interpreter and no Copilot CLI.
 * **The contract.** `/healthz`, `/readyz`, `/runtime`, `POST /ask`, one tool, and a system prompt that is

@@ -48,7 +48,7 @@ That runs four targets in a row, and each one is also available on its own:
 |--------|--------------|
 | `make build` | Builds the integrations (once), then the agent's OCI artifact: code, **all** libraries, `launch.json`. |
 | `make publish` | Pushes it to the local registry and records the digest. |
-| `make deploy` | Renders the Pod and applies it. The agent container is pinned to that digest. |
+| `make deploy` | Applies the agent's `deployment.yaml`. The agent container is pinned to that digest. |
 | `make smoke` | Runs the contract checks through a port-forward. |
 
 Then look at what is running:

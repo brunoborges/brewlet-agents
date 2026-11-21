@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Static checks that need neither a cluster nor Docker. They guard the contract every agent shares
-# (agents/README.md), the Ops runtime catalog, the manifests the deploy step would apply, the
+# (agents/README.md), the Ops runtime catalog, each agent's deployment.yaml, the
 # documentation wiring and the scripts themselves. CI runs them on every push.
 #
 #   scripts/check.sh            (or: make check)
@@ -23,7 +23,7 @@ yaml_to_json() {
   fi
 }
 
-# A digest that cannot exist, to render manifests without a registry.
+# A digest that cannot exist, to pin manifests without a registry.
 zeros="0000000000000000000000000000000000000000000000000000000000000000"
 
 # --- versions.env -------------------------------------------------------------------------------
@@ -62,7 +62,7 @@ for env_file in agents/*/agent.env; do
   count=$((count + 1))
   bad=$failures
 
-  for key in AGENT_NAME LANGUAGE FRAMEWORK RUNTIME PORT; do
+  for key in AGENT_NAME LANGUAGE FRAMEWORK RUNTIME; do
     [ -n "$(env_value "$env_file" "$key")" ] || fail "$name: agent.env is missing $key"
   done
   [ "$(env_value "$env_file" AGENT_NAME)" = "$name" ] || fail "$name: AGENT_NAME must equal the directory name"
@@ -121,31 +121,46 @@ for env_file in agents/*/agent.env; do
     done <<<"$prompts"
   fi
 
-  # The manifest renders completely and describes what Brewlet needs.
-  if manifest="$(ARCH=arm64 scripts/agent-render.sh "$name" "$REGISTRY_HOST/agents/$name@sha256:$zeros" \
+  # deployment.yaml is the whole manifest. Pin it the way the deploy step does, then check that it
+  # still agrees with agent.env and versions.env and describes what Brewlet needs.
+  if [ ! -f "$dir/deployment.yaml" ]; then
+    fail "$name: deployment.yaml is missing"
+  elif manifest="$(scripts/agent-pin.sh "$name" "$REGISTRY_HOST/agents/$name@sha256:$zeros" \
         "$REGISTRY_HOST/$SIDECAR_NAME@sha256:$zeros" 2>&1)"; then
-    if grep -q '@@' <<<"$manifest"; then
-      fail "$name: the rendered manifest still has an unfilled @@placeholder@@"
-    elif json="$(yaml_to_json <<<"$manifest" 2>&1)"; then
-      jq -e --arg rt "$runtime" '
+    if json="$(yaml_to_json <<<"$manifest" 2>&1)"; then
+      jq -e --arg name "$name" --arg ns "$AGENT_NAMESPACE" --arg rt "$runtime" --arg lang "$language" \
+            --arg secret "$AGENT_SECRET" --arg cli_url "127.0.0.1:$SIDECAR_PORT" '
+          def env_of($c): ($c.env // []) | map({(.name): (.value // .valueFrom)}) | add;
           (map(select(.kind == "Deployment")) | first) as $d
           | ($d.spec.template) as $t
+          | ($t.spec.containers[0]) as $agent
+          | ($t.spec.initContainers[0]) as $sidecar
+          | env_of($agent) as $e
           | ([.[].kind] | sort) == ["Deployment", "Service", "ServiceAccount"]
+            and all(.[]; .metadata.name == $name and .metadata.namespace == $ns)
+            and $t.metadata.labels["brewlet-agents.dev/language"] == $lang
             and $t.metadata.annotations["runtime-image.brewlet.sh/agent"] == $rt
             and $t.spec.runtimeClassName == "brewlet"
             and ([$t.spec.containers[].name] == ["agent"])
             and ([$t.spec.initContainers[].name] == ["copilot-cli"])
-            and ($t.spec.containers[0].image | test("@sha256:[0-9a-f]{64}$"))
-            and ($t.spec.initContainers[0].image | test("@sha256:[0-9a-f]{64}$"))
+            and ($agent.image | test("@sha256:[0-9a-f]{64}$"))
+            and ($sidecar.image | test("@sha256:[0-9a-f]{64}$"))
             and $d.metadata.annotations["brewlet.sh/restart-on-rotation"] == "true"
-        ' <<<"$json" >/dev/null || fail "$name: the rendered manifest does not select runtime $runtime with a digest-pinned agent and sidecar"
+            and $e.AGENT_NAME == $name
+            and $e.AGENT_RUNTIME_ID == $rt
+            and $e.COPILOT_CLI_URL == $cli_url
+            and $e.PORT == ($agent.ports[0].containerPort | tostring)
+            and $e.COPILOT_CONNECTION_TOKEN.secretKeyRef.name == $secret
+            and ([$agent, $sidecar | .resources | .requests.memory and .limits.memory] | all)
+        ' <<<"$json" >/dev/null \
+        || fail "$name: deployment.yaml disagrees with agent.env or versions.env (name, namespace, language, runtime, secret, sidecar address, port) or is missing a pinned image, the Brewlet runtime class or memory requests and limits"
     elif [ $? -eq 127 ]; then
-      warn "$name: no Ruby or PyYAML to parse the manifest; skipped"
+      warn "$name: no Ruby or PyYAML to parse deployment.yaml; skipped"
     else
-      fail "$name: the rendered manifest is not valid YAML: $json"
+      fail "$name: deployment.yaml is not valid YAML: $json"
     fi
   else
-    fail "$name: the manifest does not render: $manifest"
+    fail "$name: deployment.yaml cannot be pinned: $manifest"
   fi
 
   [ "$failures" -gt "$bad" ] || ok "$name"

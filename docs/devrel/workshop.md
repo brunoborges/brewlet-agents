@@ -432,5 +432,5 @@ language. The scripts retry transient failures, which is also what helps after a
 | A build cannot download a library | A flaky or blocked mirror | Rerun it; behind a proxy, configure the toolchain's own proxy settings |
 
 **Extension ideas** for fast groups: add a tool to the agent (a second `topic` for `runtime_facts`, or a
-new tool) and watch only the `code` layer change; change the agent's memory limit in `agent.env` and
-redeploy; or read `deploy/agent.yaml.tmpl` and find where each of the Pod's security settings comes from.
+new tool) and watch only the `code` layer change; change the agent's memory limit in its `deployment.yaml` and
+redeploy; or read that file and find where each of the Pod's security settings comes from.

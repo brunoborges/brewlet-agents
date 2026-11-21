@@ -134,16 +134,23 @@ The Pod sets these; the agent reads them and has no defaults for the first two.
 
 ```text
 agents/<name>/
-├── agent.env      AGENT_NAME, LANGUAGE (java|node|python|dotnet), FRAMEWORK, RUNTIME, PORT,
-│                  optional CPU_REQUEST, MEMORY_REQUEST, MEMORY_LIMIT
-├── launch.json    Brewlet launch descriptor; runtimeImages lists RUNTIME
-├── layers         optional: one "<directory under $APP_DIR>:<path in the artifact>" per line
-├── build.sh       fills $APP_DIR with the final linux/$ARCH file system
-├── README.md      what the example shows and the framework specifics
+├── agent.env       AGENT_NAME, LANGUAGE (java|node|python|dotnet), FRAMEWORK, RUNTIME
+├── deployment.yaml the whole Kubernetes manifest: ServiceAccount, Deployment, Service
+├── launch.json     Brewlet launch descriptor; runtimeImages lists RUNTIME
+├── layers          optional: one "<directory under $APP_DIR>:<path in the artifact>" per line
+├── build.sh        fills $APP_DIR with the final linux/$ARCH file system
+├── README.md       what the example shows and the framework specifics
 └── <sources>
 ```
 
-* `agent.env` is **parsed, never sourced**: plain `KEY=VALUE`, no quotes, no shell syntax.
+* `agent.env` is **parsed, never sourced**: plain `KEY=VALUE`, no quotes, no shell syntax. It holds
+  what the scripts need to build and select the agent; everything about how it runs is in
+  `deployment.yaml`.
+* `deployment.yaml` is complete and is applied as written, so reading it shows exactly what runs: the
+  Pod's two containers, resources, security settings and probes. The only thing `make deploy`
+  changes is the two `image:` lines, which name tags in the file and get the digests that
+  `make publish` and `make sidecar` pushed (`scripts/agent-pin.sh`). `make check` fails if the file
+  drifts from `agent.env` or `versions.env` (name, namespace, runtime, sidecar version).
 * `build.sh` runs with `APP_DIR` (output directory), `ARCH` (`arm64` or `amd64`) and
   `INTEGRATIONS_OUT` (the pinned integrations for this language, built by
   `scripts/integrations-build.sh`). Dependencies must be resolved for **linux/`$ARCH` and the
