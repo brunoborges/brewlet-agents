@@ -41,6 +41,12 @@ deployment_generations() {
 
 current_digest() { kube get runtimeimage "$RUNTIME_ID" -o jsonpath='{.status.digest}'; }
 
+# The runtime generations an agent's Pods run on, as Brewlet's operator records them: "1,2" while a
+# rollout is in flight, "2" once it is over. Empty when the operator has not seen the agent.
+workload_generations() { # AGENT RUNTIME_JSON
+  jq -r --arg n "$1" '[.status.workloadGenerations[]? | select(.name == $n) | .generations[].generation | tostring] | join(",")' <<<"$2"
+}
+
 show_status() {
   local runtime agents agent jdk generations artifact
   runtime="$(kube get runtimeimage "$RUNTIME_ID" -o json)"
@@ -50,7 +56,7 @@ show_status() {
   printf '  %-16s %-26s %-4s %s\n' AGENT "JDK (live, from /runtime)" GEN "ARTIFACT (the app's own bytes)"
   for agent in $agents; do
     jdk="$(agent_runtime "$agent" 2>/dev/null | jq -r '"\(.language.version) \(.language.vendor)"' 2>/dev/null)" || jdk=""
-    generations="$(jq -r --arg n "$agent" '[.status.workloadGenerations[]? | select(.name == $n) | .generations[].generation | tostring] | join(",")' <<<"$runtime")"
+    generations="$(workload_generations "$agent" "$runtime")"
     artifact="$(kube -n "$AGENT_NAMESPACE" get pods -l "app.kubernetes.io/name=$agent" \
       -o jsonpath='{.items[0].metadata.annotations.brewlet\.sh/artifact-digest}' 2>/dev/null)" || artifact=""
     printf '  %-16s %-26s %-4s %s\n' "$agent" "${jdk:-unreachable}" "${generations:--}" "${artifact:0:19}"
@@ -109,6 +115,25 @@ roll_agents() { # BEFORE: the output of deployment_generations taken before the 
   for name in $(agents_on_runtime); do
     kube -n "$AGENT_NAMESPACE" rollout status "deployment/$name" --timeout=5m
   done
+  wait_for_workload_generations
+}
+
+# The operator records the generation of a workload's Pods a few seconds after its rollout ends.
+# Wait for that, so the table that follows shows the generation the agents run on now.
+wait_for_workload_generations() {
+  local runtime generation agent stale waited=0
+  while :; do
+    runtime="$(kube get runtimeimage "$RUNTIME_ID" -o json)"
+    generation="$(jq -r '.status.generation' <<<"$runtime")"
+    stale=""
+    for agent in $(agents_on_runtime); do
+      [ "$(workload_generations "$agent" "$runtime")" = "$generation" ] || stale="$stale $agent"
+    done
+    [ -n "$stale" ] && [ "$waited" -lt 60 ] || break
+    sleep 2
+    waited=$((waited + 2))
+  done
+  [ -z "$stale" ] || warn "Brewlet has not recorded generation $generation for:$stale"
 }
 
 rotate_to() { # IMAGE

@@ -23,7 +23,28 @@ esac
 
 previous="$(kube get runtimeimage "$id" -o jsonpath='{.status.generation}')"
 log "rotating runtime $id (generation ${previous:-?}) to $image"
-brewlet k8s runtime rotate "$id" --image "$image" "${flags[@]}"
+
+# The operator keeps updating the RuntimeImage's status, most of all while it settles a rotation. The
+# CLI reads the object and then patches it, so now and then the patch loses that race with "the object
+# has been modified". Nothing was written in that case, so asking again is safe; any other error is final.
+rotate() {
+  local attempt out
+  for attempt in 1 2 3 4 5; do
+    if out="$(brewlet k8s runtime rotate "$id" --image "$image" "${flags[@]}" 2>&1)"; then
+      printf '%s\n' "$out"
+      return 0
+    fi
+    case "$out" in
+      *"the object has been modified"*)
+        warn "the RuntimeImage changed while the CLI was patching it (attempt $attempt of 5); asking again"
+        sleep 2 ;;
+      *) break ;;
+    esac
+  done
+  printf '%s\n' "$out" >&2
+  return 1
+}
+rotate || die "could not rotate runtime $id to $image"
 
 # Rotation is done when the node runs a newer generation and RotationComplete observes the
 # current spec. Waiting on the generation alone would race the old, still-true condition.
