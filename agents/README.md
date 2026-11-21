@@ -100,10 +100,11 @@ when it is omitted, and reuses the same Copilot session for the same id.
   `deployment`. It returns the matching part of the `/runtime` document as flat `key: value` lines
   (`language.home: /usr/jdk`). The prompt makes the model call it before answering anything about
   versions, paths or the deployment.
-* **Built-in tools are off.** The agent can call `runtime_facts` and nothing else: no shell, no file
-  system, no network tools. Non-Java SDKs start sessions in `mode: "empty"`; the Java core always
-  uses coding-agent mode, so there it is disabled explicitly. Permissions allow only the agent's own
-  tool.
+* **The model can call `runtime_facts` and nothing else.** The session allow-lists only the agent's
+  own tool (`custom:*`), and permissions allow only that tool. Excluding the CLI's built-in tools is
+  *not* enough: the Copilot CLI's own GitHub MCP tools (which could read repositories with the
+  sidecar's token) and `web_search` stay callable. The smoke test asks the model to list the tools it
+  can call and fails on anything but `runtime_facts`.
 * **No model is hard-coded.** Sessions use the account's default model.
 * **Configuration is external.** Endpoint, token, timeouts and tool settings come from the
   framework's configuration mechanism (`application.yml`, `config/*.json`, settings module, ...) with

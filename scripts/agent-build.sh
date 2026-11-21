@@ -41,6 +41,11 @@ if [ "$(uname -s)" = "Darwin" ]; then
   xattr -cr "$APP_DIR" 2>/dev/null || true
 fi
 
+# Brewlet keeps modification times in the layer tarballs, so a directory stamped with the build time
+# would give an unchanged layer a new digest on every build. Pin every time to one fixed date: a
+# code-only change then re-pushes only the code layer.
+TZ=UTC find "$APP_DIR" -exec touch -h -t 198002010000 {} +
+
 layer_args=()
 layers_file="$dir/layers"
 [ -f "$layers_file" ] || layers_file=""

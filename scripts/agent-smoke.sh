@@ -99,6 +99,12 @@ if [ "$authenticated" = "true" ]; then
   CALL_TIMEOUT=150 call POST /ask '{"question":"Which language runtime and which Copilot CLI version are you running on? Use your tool. Answer in two short sentences."}'
   expect "POST /ask returns a model answer" 200 '(.answer | length > 0) and (.conversationId | length > 0)'
   [ "$code" != 200 ] || printf '    \033[2m%s\033[0m\n' "$(jq -r .answer "$work/body" | head -c 400)"
+  # Excluding the CLI's built-in tools is not enough: its GitHub MCP tools and web_search stay
+  # callable. The agents allow-list only their own tool, and the model itself is the witness.
+  CALL_TIMEOUT=150 call POST /ask '{"question":"List the exact names of every tool you are able to call right now, one per line. Do not call any of them. Do not explain."}'
+  expect "the model can call only the agent's own tool (runtime_facts)" 200 '
+    .answer | contains("runtime_facts")
+    and (test("github-mcp-server|web_search|\\bbash\\b|\\bpowershell\\b|\\bweb_fetch\\b") | not)'
 elif [ "${REQUIRE_AUTH:-0}" = "1" ]; then
   fail "the Copilot CLI is not authenticated; run 'make auth'"
 else

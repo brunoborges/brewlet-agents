@@ -21,8 +21,10 @@ copilot:
       max-age: 1h
   agents:
     concierge:
-      # Only the runtime_facts tool: no shell, file or web access for the model.
-      built-in-tools: false
+      # An allow-list over every tool source: only the agent's own runtime_facts tool. Excluding the
+      # CLI's built-in tools (built-in-tools: false) is not enough, because the CLI's GitHub MCP
+      # tools and web_search stay callable.
+      available-tools: ["custom:*"]
       response-timeout: 2m
       permissions:
         allow-agent-tools: true

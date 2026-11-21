@@ -4,9 +4,12 @@ SHELL := /usr/bin/env bash
 # Every directory under agents/ with an agent.env is an agent.
 AGENTS := $(sort $(patsubst agents/%/agent.env,%,$(wildcard agents/*/agent.env)))
 
+# The documentation site builds with mkdocs when it is installed, and in this image otherwise.
+MKDOCS_IMAGE := squidfunk/mkdocs-material:$(shell sed -n 's/^MKDOCS_MATERIAL_VERSION=//p' versions.env)
+
 .PHONY: help doctor list up cluster runtimes sidecar down build publish deploy smoke undeploy agent \
-        agents build-all auth deauth status logs rotate rotate-status clean docs docs-serve check \
-        check-agent
+        agents build-all auth deauth status logs ask whoami layers footprint rotate rotate-status clean docs docs-serve \
+        check check-agent
 
 help: ## Show this help
 	@echo "Usage: make <target> [AGENT=<name>]"; echo
@@ -48,6 +51,12 @@ build: check-agent ## Build the OCI artifact of AGENT (code + dependencies + lau
 publish: check-agent ## Push AGENT to the local registry and verify it
 	@scripts/agent-publish.sh $(AGENT)
 
+layers: check-agent ## Show what the published artifact of AGENT is made of: layers and sizes
+	@scripts/agent-layers.sh $(AGENT)
+
+footprint: ## Artifact size and memory in use of the deployed agents (or of AGENT=<name>)
+	@scripts/footprint.sh $(AGENT)
+
 deploy: check-agent ## Deploy AGENT: one Pod with the app on a Brewlet runtime plus the CLI sidecar
 	@scripts/agent-deploy.sh $(AGENT)
 
@@ -62,6 +71,12 @@ agent: build publish deploy smoke ## Build, publish, deploy and smoke-test AGENT
 logs: check-agent ## Tail the logs of AGENT (app) and its Copilot CLI sidecar
 	@KUBECONFIG=build/kubeconfig kubectl -n agents logs deployment/$(AGENT) -c agent --tail=40
 	@KUBECONFIG=build/kubeconfig kubectl -n agents logs deployment/$(AGENT) -c copilot-cli --tail=10
+
+ask: check-agent ## Ask AGENT a question: make ask AGENT=java-spring Q="Which JDK are you on?" (needs make auth)
+	@scripts/agent-ask.sh $(AGENT) "$$Q"
+
+whoami: check-agent ## Print what AGENT reports about the runtime it is running on (its /runtime document)
+	@scripts/agent-ask.sh $(AGENT) --runtime
 
 # --- All agents ----------------------------------------------------------------------------------
 build-all: ## Build and publish every agent (no cluster deployment)
@@ -94,8 +109,16 @@ check: ## Static checks: the agent contract, launch.json, scripts and manifests 
 clean: ## Remove build output (keeps the cluster)
 	rm -rf build/agents build/integrations
 
-docs: ## Build the documentation site into build/site (needs: pip install -r docs/requirements.txt)
-	mkdocs build --strict --site-dir build/site
+docs: ## Build the documentation site into build/site (uses mkdocs when installed, otherwise Docker)
+	@if command -v mkdocs >/dev/null 2>&1; then \
+	  mkdocs build --strict --site-dir build/site; \
+	else \
+	  docker run --rm -u "$$(id -u):$$(id -g)" -v "$(CURDIR):/docs" $(MKDOCS_IMAGE) build --strict --site-dir build/site; \
+	fi
 
 docs-serve: ## Serve the documentation site locally on http://127.0.0.1:8000
-	mkdocs serve
+	@if command -v mkdocs >/dev/null 2>&1; then \
+	  mkdocs serve; \
+	else \
+	  docker run --rm -it -p 127.0.0.1:8000:8000 -v "$(CURDIR):/docs" $(MKDOCS_IMAGE) serve --dev-addr 0.0.0.0:8000; \
+	fi

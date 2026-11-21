@@ -168,6 +168,12 @@ if [ -f mkdocs.yml ]; then
 else
   fail "mkdocs.yml is missing"
 fi
+[ -n "${MKDOCS_MATERIAL_VERSION:-}" ] || fail "versions.env does not set MKDOCS_MATERIAL_VERSION"
+grep -q "^mkdocs-material==${MKDOCS_MATERIAL_VERSION:-}\$" docs/requirements.txt 2>/dev/null \
+  || fail "docs/requirements.txt must pin mkdocs-material==${MKDOCS_MATERIAL_VERSION:-} (MKDOCS_MATERIAL_VERSION in versions.env)"
+for page in $(sed -n 's/^.*: \([A-Za-z0-9_./-]*\.md\)$/\1/p' mkdocs.yml 2>/dev/null); do
+  [ -f "docs/$page" ] || fail "mkdocs.yml lists $page, but docs/$page does not exist"
+done
 
 # --- workflows -------------------------------------------------------------------------------------
 log "workflows"
