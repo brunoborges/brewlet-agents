@@ -21,7 +21,7 @@ launch.json      launch layer    /usr/jdk/bin/java -XX:MaxRAMPercentage=70 -XX:+
 Deliberately **not** in it: the JDK (`/usr/jdk` comes from the `java-25` runtime image) and the Copilot CLI
 (it runs in the sidecar). The only file over 3 MB is `copilot-sdk-2.0.1.jar` (7.9 MiB, class files only).
 
-Measured on the kind cluster; [`agent.env`](agent.env) asks for 100m CPU, 192Mi, limit 384Mi:
+Measured on the kind cluster; [`deployment.yaml`](deployment.yaml) asks for 100m CPU, 192Mi, limit 384Mi:
 
 | working set | idle | after asks | 4 concurrent asks |
 | --- | --- | --- | --- |

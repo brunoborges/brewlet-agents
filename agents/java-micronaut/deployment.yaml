@@ -1,24 +1,33 @@
-# Pod template shared by every agent. scripts/agent-render.sh fills in the placeholder tokens.
+# java-micronaut on Kubernetes: the complete deployment, readable top to bottom.
+#
+# `make deploy AGENT=java-micronaut` applies this file as written, except that it replaces the two
+# `image:` lines with the digests that `make publish` and `make sidecar` pushed (scripts/agent-pin.sh).
+# Brewlet runs only digest-pinned application images, which is why the file names the tags.
 #
 # One Pod, two containers, two owners:
 #   agent        the application artifact: code + dependencies + launch.json, nothing else.
-#                Brewlet supplies the language runtime (@@RUNTIME@@) chosen by the annotation below.
+#                Brewlet supplies the language runtime (java-25) chosen by the annotation below.
 #   copilot-cli  an ordinary OCI sidecar that runs the Copilot CLI. It is the only container that
 #                holds GitHub credentials; the agent reaches it over the Pod's loopback interface.
+#
+# Not in this file: the namespace and the Secret `copilot-cli`. `make deploy` creates the namespace
+# with Pod Security "restricted" and the Secret with a random connection token; `make auth` adds
+# the optional GitHub token to that Secret.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: @@AGENT@@
-  namespace: @@NAMESPACE@@
+  name: java-micronaut
+  namespace: agents
+# The agent never calls the Kubernetes API, so it gets no API token.
 automountServiceAccountToken: false
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: @@AGENT@@
-  namespace: @@NAMESPACE@@
+  name: java-micronaut
+  namespace: agents
   labels:
-    app.kubernetes.io/name: @@AGENT@@
+    app.kubernetes.io/name: java-micronaut
     app.kubernetes.io/part-of: brewlet-agents
   annotations:
     # Ask the Brewlet operator to roll this Deployment when Ops rotates the runtime image.
@@ -27,51 +36,49 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: @@AGENT@@
+      app.kubernetes.io/name: java-micronaut
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: @@AGENT@@
+        app.kubernetes.io/name: java-micronaut
         app.kubernetes.io/part-of: brewlet-agents
-        brewlet-agents.dev/language: @@LANGUAGE@@
+        brewlet-agents.dev/language: java
       annotations:
         # The suffix is the container name: this container runs on the platform-owned runtime.
-        runtime-image.brewlet.sh/agent: @@RUNTIME@@
+        runtime-image.brewlet.sh/agent: java-25
     spec:
       runtimeClassName: brewlet
-      serviceAccountName: @@AGENT@@
+      serviceAccountName: java-micronaut
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 20
-      nodeSelector:
-        kubernetes.io/arch: @@ARCH@@
       securityContext:
         seccompProfile:
           type: RuntimeDefault
       initContainers:
         # A native sidecar: starts before the agent and lives as long as the Pod.
         - name: copilot-cli
-          image: @@SIDECAR@@
+          image: localhost:5001/copilot-cli:1.0.114
           restartPolicy: Always
           env:
             # The SDK must present this token; the CLI refuses connections without it.
             - name: COPILOT_CONNECTION_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: @@SECRET@@
+                  name: copilot-cli
                   key: connection-token
             # Optional: absent until 'make auth', in which case the CLI starts unauthenticated.
             - name: COPILOT_GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: @@SECRET@@
+                  name: copilot-cli
                   key: github-token
                   optional: true
           resources:
             requests:
               cpu: 50m
-              memory: @@SIDECAR_MEMORY_REQUEST@@
+              memory: 128Mi
             limits:
-              memory: @@SIDECAR_MEMORY_LIMIT@@
+              memory: 512Mi
           securityContext:
             runAsNonRoot: true
             runAsUser: 65532
@@ -85,25 +92,26 @@ spec:
               mountPath: /tmp
       containers:
         - name: agent
-          # Pinned by digest: Brewlet only runs immutable application images.
-          image: @@ARTIFACT@@
+          image: localhost:5001/agents/java-micronaut:dev
           ports:
             - name: http
-              containerPort: @@PORT@@
+              containerPort: 8080
           env:
             - name: PORT
-              value: "@@PORT@@"
+              value: "8080"
             - name: AGENT_NAME
-              value: @@AGENT@@
+              value: java-micronaut
             - name: AGENT_RUNTIME_ID
-              value: @@RUNTIME@@
+              value: java-25
+            # Where the sidecar listens: the Pod's loopback interface.
             - name: COPILOT_CLI_URL
-              value: 127.0.0.1:@@SIDECAR_PORT@@
+              value: 127.0.0.1:4321
             - name: COPILOT_CONNECTION_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: @@SECRET@@
+                  name: copilot-cli
                   key: connection-token
+            # The Downward API: the agent reports these in GET /runtime.
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -116,12 +124,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+          # Measured numbers are in README.md.
           resources:
             requests:
-              cpu: @@CPU_REQUEST@@
-              memory: @@MEMORY_REQUEST@@
+              cpu: 100m
+              memory: 192Mi
             limits:
-              memory: @@MEMORY_LIMIT@@
+              memory: 384Mi
           securityContext:
             # Brewlet's admission fills in the runtime's approved uid/gid; this keeps the manifest
             # compliant with Pod Security "restricted" before that happens.
@@ -162,14 +171,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: @@AGENT@@
-  namespace: @@NAMESPACE@@
+  name: java-micronaut
+  namespace: agents
   labels:
-    app.kubernetes.io/name: @@AGENT@@
+    app.kubernetes.io/name: java-micronaut
     app.kubernetes.io/part-of: brewlet-agents
 spec:
   selector:
-    app.kubernetes.io/name: @@AGENT@@
+    app.kubernetes.io/name: java-micronaut
   ports:
     - name: http
       port: 80

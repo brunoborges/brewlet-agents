@@ -25,7 +25,7 @@ the Copilot CLI (it runs in the sidecar). `Microsoft.Copilot.SDK` would bundle t
 (`runtimes/<rid>/native/`, 340 MiB), making the artifact about 152 MiB compressed instead of 6; the build keeps it
 out and fails if it ever shows up.
 
-Measured on the kind cluster; [`agent.env`](agent.env) asks for 100m CPU, 128Mi, limit 256Mi:
+Measured on the kind cluster; [`deployment.yaml`](deployment.yaml) asks for 100m CPU, 128Mi, limit 256Mi:
 
 | working set | fresh Pod | after two asks | 32 asks, 8 at a time |
 | --- | --- | --- | --- |

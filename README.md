@@ -89,11 +89,10 @@ make deauth && make down        # remove the token, delete the cluster
 ## Repository layout
 
 ```text
-agents/<name>/     one agent: agent.env, launch.json, layers, build.sh, sources, README.md
+agents/<name>/     one agent: agent.env, deployment.yaml, launch.json, layers, build.sh, sources, README.md
 agents/README.md   the contract all agents implement
 runtimes/*.env     the runtime catalog Ops approves (image digest, uid, interpreter)
 sidecars/          the Copilot CLI sidecar image
-deploy/            the Pod, Service and ServiceAccount template every agent shares
 cluster/           the kind cluster configuration
 demo/rotation/     builds the "before the patch" runtime for make rotate
 scripts/           everything the Makefile runs (shell, nothing to install)

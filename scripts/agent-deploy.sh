@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Deploys a published agent to the kind cluster: one Pod with the agent container (running on
-# the Ops-owned runtime) and the Copilot CLI sidecar.
+# Deploys a published agent to the kind cluster: applies agents/<agent>/deployment.yaml (one Pod
+# with the agent container on the Ops-owned runtime and the Copilot CLI sidecar), with its two
+# images pinned to the digests that were just published.
 #
 #   scripts/agent-deploy.sh <agent>
 set -euo pipefail
@@ -21,10 +22,10 @@ sidecar_digest="$(registry_digest "$SIDECAR_NAME" "$COPILOT_CLI_VERSION")"
 ensure_agent_namespace
 ensure_agent_secret
 
-"$ROOT/scripts/agent-render.sh" "$agent" "$artifact" "$REGISTRY_HOST/$SIDECAR_NAME@$sidecar_digest" > "$out/agent.yaml"
+"$ROOT/scripts/agent-pin.sh" "$agent" "$artifact" "$REGISTRY_HOST/$SIDECAR_NAME@$sidecar_digest" > "$out/deployment.yaml"
 
 log "deploying $agent to namespace $AGENT_NAMESPACE"
-kube apply -f "$out/agent.yaml" >/dev/null
+kube apply -f "$out/deployment.yaml" >/dev/null
 
 if ! kube -n "$AGENT_NAMESPACE" rollout status "deployment/$agent" --timeout=5m; then
   warn "$agent did not become ready; recent Pod events and logs:"

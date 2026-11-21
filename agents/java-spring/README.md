@@ -23,7 +23,7 @@ Deliberately **not** in it: the JDK (`/usr/jdk` comes from the `java-25` runtime
 runs in the sidecar). The files over 2 MB are `copilot-sdk-2.0.1.jar` (7.9 MiB, class files only), Tomcat,
 `spring-web` and `spring-core`.
 
-Measured on the kind cluster; [`agent.env`](agent.env) asks for 100m CPU, 256Mi, limit 512Mi:
+Measured on the kind cluster; [`deployment.yaml`](deployment.yaml) asks for 100m CPU, 256Mi, limit 512Mi:
 
 | working set | fresh Pod | after two asks |
 | --- | --- | --- |

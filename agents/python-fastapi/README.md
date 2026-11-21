@@ -19,7 +19,7 @@ Deliberately **not** in it: CPython and its standard library (`/usr` comes from 
 has no pip and no shell) and the Copilot CLI (it runs in the sidecar). The files over 2 MiB are
 `copilot/_generated/rpc.py` (4.5 MiB, plus 5.0 MiB of bytecode) and pydantic's native module (4.7 MiB).
 
-Measured on the kind cluster; [`agent.env`](agent.env) asks for 100m CPU, 128Mi, limit 256Mi:
+Measured on the kind cluster; [`deployment.yaml`](deployment.yaml) asks for 100m CPU, 128Mi, limit 256Mi:
 
 | working set | fresh Pod | after one ask | 12 asks at once |
 | --- | --- | --- | --- |
