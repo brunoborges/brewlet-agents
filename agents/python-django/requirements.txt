@@ -1,0 +1,22 @@
+# The dependencies of the agent, resolved for the Linux runtime by build.sh (see the README, "Build notes").
+# The Copilot integration wheels are not listed: scripts/integrations/python.sh builds them from the pinned
+# copilot-sdk-integrations tree and build.sh installs them from build/integrations/python.
+annotated-types==0.8.0
+anyio==4.16.0
+asgiref==3.11.1
+certifi==2026.10.23
+click==8.5.1
+django==6.0.10
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+idna==3.20
+microsoft-copilot-sdk==2.0.1
+pydantic==2.14.3
+pydantic-core==2.50.4
+python-dateutil==4.0.0
+sqlparse==0.5.5
+typing-extensions==4.16.0
+typing-inspection==0.4.5
+tzdata==2026.6
+uvicorn==0.54.0

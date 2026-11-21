@@ -58,7 +58,8 @@ and a shared connection token.
 
 ### 3. One Copilot CLI service for the whole cluster
 
-A single shared CLI would use less memory than eight copies (about 31 MB idle each in this project).
+A single shared CLI would use less memory than eight copies. In the current `make footprint` snapshot
+after one request, each sidecar used 36–47 MiB (see the [measured agent footprints](agents/index.md#a-measured-snapshot)).
 It also makes one process the holder of credentials for every team's conversations, over a network
 connection that needs its own authentication, and it couples every agent's availability to it. The
 sidecar keeps the trust boundary at the Pod, which is the unit Kubernetes already isolates.
@@ -69,7 +70,7 @@ sidecar keeps the trust boundary at the Pod, which is the unit Kubernetes alread
   Jackson, Netty or `node_modules` lives under `/app`, so it needs an artifact rebuild. The split
   makes this boundary visible rather than removing it.
 * **Every Pod carries a CLI.** Eight agents are eight CLI processes. That is the price of the
-  Pod-level trust boundary; it is about 31 MB idle and about 75 MB after a request.
+  Pod-level trust boundary; in the current snapshot each sidecar used 36–47 MiB after one request.
 * **The CLI version is the platform's choice.** An agent cannot pin its own, and the SDK and CLI have
   to stay compatible. `/runtime` reports the CLI's version and protocol so a mismatch is visible.
 * **The integrations are built from a commit.** `brunoborges/copilot-sdk-integrations` is not
