@@ -1,5 +1,13 @@
 # Brewlet agents
 
+[![CI](https://github.com/brunoborges/brewlet-agents/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/brunoborges/brewlet-agents/actions/workflows/ci.yml)
+[![End-to-end](https://github.com/brunoborges/brewlet-agents/actions/workflows/e2e.yml/badge.svg?branch=main)](https://github.com/brunoborges/brewlet-agents/actions/workflows/e2e.yml)
+[![Documentation](https://github.com/brunoborges/brewlet-agents/actions/workflows/pages.yml/badge.svg?branch=main)](https://github.com/brunoborges/brewlet-agents/actions/workflows/pages.yml)
+![Java 25](https://img.shields.io/badge/Java-25-ED8B00?logo=openjdk&logoColor=white)
+![Node.js 24](https://img.shields.io/badge/Node.js-24-339933?logo=nodedotjs&logoColor=white)
+![Python 3.13](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
+![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
+
 [Microsoft Copilot SDK](https://github.com/microsoft/copilot-sdk) agents in Java, Node.js, Python and
 .NET, deployed to a local Kubernetes cluster (`kind`) with [Brewlet](https://github.com/microsoft/brewlet),
 and documented end to end for demos, blog posts, videos and workshops.
