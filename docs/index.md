@@ -1,6 +1,7 @@
 # Brewlet agents
 
-Copilot SDK agents in **Java, Node.js, Python and .NET**, running on a local Kubernetes cluster with
+[Microsoft Copilot SDK](https://github.com/microsoft/copilot-sdk) agents in **Java, Node.js, Python
+and .NET**, running on a local Kubernetes cluster with
 [Brewlet](https://github.com/microsoft/brewlet), built to be shown: in a blog post, a video, a demo
 or a workshop.
 
