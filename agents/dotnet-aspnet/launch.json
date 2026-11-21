@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "process": {
+    "entrypoint": ["/usr/bin/dotnet"],
+    "args": ["/app/Concierge.dll"],
+    "workingDir": "/app"
+  },
+  "runtimeImages": ["dotnet-10"]
+}

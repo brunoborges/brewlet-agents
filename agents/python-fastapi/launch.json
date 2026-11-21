@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "process": {
+    "entrypoint": ["/usr/bin/python3"],
+    "args": ["-m", "concierge"],
+    "workingDir": "/app",
+    "env": [
+      { "name": "PYTHONPATH", "value": "/app/site-packages:/app" },
+      { "name": "PYTHONDONTWRITEBYTECODE", "value": "1" },
+      { "name": "PYTHONUNBUFFERED", "value": "1" }
+    ]
+  },
+  "runtimeImages": ["python-3.13"]
+}

@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Concierge</AssemblyName>
+    <RootNamespace>BrewletAgents.Concierge</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- The runtime image has no ICU, so culture data is invariant. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- The Web SDK turns on server GC, which gives every core its own heap. One agent in a small Pod
+         does not need that: workstation GC idles at about 60% of the resident memory. -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Brewlet artifact">
+    <!-- The Brewlet runtime image provides the shared framework: publish only what is not in it. -->
+    <SelfContained>false</SelfContained>
+    <UseAppHost>false</UseAppHost>
+    <!-- A RID-specific restore would also fetch the runtime packs (about 180 MB) that only self-contained apps use. -->
+    <EnableRuntimePackDownload>false</EnableRuntimePackDownload>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <PublishReferencesDocumentationFiles>false</PublishReferencesDocumentationFiles>
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+    <!-- The API serves no static files, so there is no static web assets manifest to publish. -->
+    <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
+    <!-- The SDK stamps the repository's HEAD commit into the assembly version, so every commit anywhere in the
+         repository would change the code layer. Without it the artifact depends on this directory only. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <!-- Microsoft.Copilot.SDK downloads and bundles the Copilot CLI at build time. The CLI runs in
+         the sidecar, so it must stay out of the artifact. The integration's package reference
+         excludes the SDK's build assets already; this keeps it that way if one is ever added. -->
+    <CopilotSkipCliDownload>true</CopilotSkipCliDownload>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The only Copilot dependency: the integration brings the SDK in transitively. The version
+         floats because the local feed holds exactly the one package that
+         scripts/integrations/dotnet.sh packed from the pinned source. -->
+    <PackageReference Include="CopilotSdk.Extensions.Hosting" Version="*-*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The Web SDK publishes every *.json and *.config file; these two only feed the artifact build. -->
+    <Content Remove="launch.json;nuget.config" />
+    <EmbeddedResource Include="prompts/concierge.md" LogicalName="prompts/concierge.md" />
+  </ItemGroup>
+
+</Project>

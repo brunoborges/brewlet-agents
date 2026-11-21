@@ -1,0 +1,94 @@
+name: End to end
+
+# Brings the whole platform up on a GitHub-hosted runner (kind, a local registry, Brewlet, the
+# Ops-owned runtimes and the Copilot CLI sidecar), then deploys agents and smoke-tests them. It is
+# much slower than CI, so it runs on demand and once a week instead of on every push.
+on:
+  workflow_dispatch:
+    inputs:
+      agents:
+        description: Agents to deploy, separated by spaces (make list shows them all)
+        type: string
+        default: java-spring node-fastify python-fastapi dotnet-aspnet
+      rotation:
+        description: Also run the runtime rotation demo (make rotate); needs a Java agent in the list
+        type: boolean
+        default: false
+  schedule:
+    - cron: "17 5 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    name: Platform, agents and smoke tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      AGENTS: ${{ inputs.agents || 'java-spring node-fastify python-fastapi dotnet-aspnet' }}
+      # A boolean only: the token itself is handed to the one step that needs it.
+      HAS_COPILOT_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Check the host
+        run: make doctor
+      - name: Bring up the platform (kind, registry, Brewlet, runtimes, Copilot CLI sidecar)
+        run: make up
+
+      - name: Build, publish, deploy and smoke-test the agents
+        run: |
+          for agent in $AGENTS; do
+            echo "::group::$agent"
+            make agent AGENT="$agent"
+            echo "::endgroup::"
+          done
+
+      - name: Give the Copilot CLI sidecar a GitHub token and run the live checks
+        if: env.HAS_COPILOT_TOKEN == 'true'
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+        run: |
+          make auth
+          for agent in $AGENTS; do
+            echo "::group::$agent"
+            REQUIRE_AUTH=1 make smoke AGENT="$agent"
+            echo "::endgroup::"
+          done
+      - name: Explain why the live checks were skipped
+        if: env.HAS_COPILOT_TOKEN != 'true'
+        run: echo "::notice::The secret COPILOT_GITHUB_TOKEN is not set, so only the checks that need no model ran."
+
+      - name: Rotate the java-25 runtime and watch the Java agents follow
+        if: inputs.rotation
+        run: make rotate
+
+      - name: Diagnostics
+        if: always()
+        run: |
+          make status || true
+          export KUBECONFIG="$PWD/build/kubeconfig"
+          kubectl -n agents get events --sort-by=.lastTimestamp | tail -n 40 || true
+          for agent in $AGENTS; do
+            echo "::group::logs of $agent"
+            make logs AGENT="$agent" || true
+            echo "::endgroup::"
+          done

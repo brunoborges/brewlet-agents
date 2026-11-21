@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.1</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>io.github.brunoborges.brewletagents</groupId>
+  <artifactId>java-spring-concierge</artifactId>
+  <version>1.0.0</version>
+  <name>Runtime Concierge (Spring Boot)</name>
+  <description>Copilot agent that explains the Brewlet runtime it runs on.</description>
+
+  <properties>
+    <!-- The Ops-owned runtime is Java 25 (runtimes/java-25.env), so compile for it. -->
+    <java.version>25</java.version>
+    <maven.compiler.release>25</maven.compiler.release>
+    <!-- Built by scripts/integrations-build.sh into the shared build/m2 repository. -->
+    <copilot.integration.version>0.1.0-SNAPSHOT</copilot.integration.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.microsoft</groupId>
+      <artifactId>copilot-spring-boot-starter</artifactId>
+      <version>${copilot.integration.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-webmvc</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>app</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <annotationProcessors>
+            <annotationProcessor>com.microsoft.copilot.tool.CopilotToolProcessor</annotationProcessor>
+          </annotationProcessors>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.github.brunoborges.brewletagents</groupId>
+  <artifactId>java-quarkus-concierge</artifactId>
+  <version>1.0.0</version>
+  <name>Runtime Concierge (Quarkus)</name>
+  <description>Copilot agent that explains the Brewlet runtime it runs on.</description>
+
+  <properties>
+    <!-- The Ops-owned runtime is Java 25 (runtimes/java-25.env), so compile for it. -->
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- The Quarkus release the Copilot extension is built and tested against. -->
+    <quarkus.version>3.40.1</quarkus.version>
+    <!-- Built by scripts/integrations-build.sh into the shared build/m2 repository. -->
+    <copilot.integration.version>0.1.0-SNAPSHOT</copilot.integration.version>
+    <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
+    <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
+    <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
+    <maven-surefire-plugin.version>3.5.3</maven-surefire-plugin.version>
+    <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-bom</artifactId>
+        <version>${quarkus.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.microsoft</groupId>
+      <artifactId>copilot-quarkus</artifactId>
+      <version>${copilot.integration.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest-jackson</artifactId>
+      <exclusions>
+        <!-- Only needed for quarkus.http.compressors=br. Its POM activates a native-<os>-<arch> jar
+             on the build host's OS, so a macOS build would ship a macOS library to a Linux runtime. -->
+        <exclusion>
+          <groupId>com.aayushatharva.brotli4j</groupId>
+          <artifactId>brotli4j</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <!-- Lets the blocking endpoints run on virtual threads (@RunOnVirtualThread). -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-virtual-threads</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <!-- Names the application jar in the fast-jar's app/ directory (app/concierge.jar). -->
+    <finalName>concierge</finalName>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>${maven-clean-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>${maven-resources-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${maven-surefire-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${maven-jar-plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <version>${quarkus.version}</version>
+        <extensions>true</extensions>
+        <executions>
+          <execution>
+            <goals>
+              <goal>build</goal>
+              <goal>generate-code</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
+        <configuration>
+          <annotationProcessors>
+            <annotationProcessor>com.microsoft.copilot.tool.CopilotToolProcessor</annotationProcessor>
+          </annotationProcessors>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

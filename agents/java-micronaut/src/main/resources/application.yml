@@ -1,0 +1,37 @@
+micronaut:
+  application:
+    name: java-micronaut-concierge
+  server:
+    port: ${PORT:8080}
+    host: 0.0.0.0
+  lifecycle:
+    graceful-shutdown:
+      enabled: true
+      # Shorter than the Pod's 20 s termination grace period.
+      grace-period: 15s
+  copilot:
+    # The Copilot CLI runs in the sidecar container of the same Pod. Both values come from the
+    # Pod spec; there are deliberately no defaults, so a misconfigured Pod fails at startup.
+    cli-url: ${COPILOT_CLI_URL}
+    tcp-connection-token: ${COPILOT_CONNECTION_TOKEN}
+    sessions:
+      cleanup:
+        max-age: 1h
+    agents:
+      concierge:
+        # Allow-list with only the agent's own runtime_facts tool. built-in-tools: false is not enough:
+        # it hides the shell and file tools but leaves the CLI's GitHub MCP tools and web_search reachable.
+        available-tools:
+          - "custom:*"
+        response-timeout: 2m
+        permissions:
+          allow-agent-tools: true
+
+# Bound to the Deployment record. Brewlet and the Pod spec set these environment variables.
+# Micronaut placeholders do not nest, so there is no ${POD_NAME:${HOSTNAME:...}} fallback.
+deployment:
+  agent-name: ${AGENT_NAME:java-micronaut}
+  runtime-id: ${AGENT_RUNTIME_ID:unknown}
+  pod: ${POD_NAME:unknown}
+  namespace: ${POD_NAMESPACE:unknown}
+  node: ${NODE_NAME:unknown}

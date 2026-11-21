@@ -1,0 +1,29 @@
+{
+  "name": "node-nestjs-concierge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runtime Concierge: a NestJS agent on the Copilot SDK integration, packaged for Brewlet",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@copilot-sdk-integrations/agent-core": "file:../../build/integrations/node/copilot-sdk-integrations-agent-core-0.1.0.tgz",
+    "@copilot-sdk-integrations/nestjs": "file:../../build/integrations/node/copilot-sdk-integrations-nestjs-0.1.0.tgz",
+    "@microsoft/copilot-sdk": "2.0.0",
+    "@nestjs/common": "12.2.0",
+    "@nestjs/core": "12.2.0",
+    "@nestjs/platform-express": "12.2.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "5.9.3"
+  }
+}

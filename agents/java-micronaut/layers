@@ -1,0 +1,4 @@
+# One Brewlet layer per line: <directory under the build output>:<path inside /app>.
+# Dependencies first: they change rarely, so their layer is reused when only the code changes.
+deps:/app
+code:/app

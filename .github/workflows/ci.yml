@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: Static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Contract, manifests, docs wiring, workflows, shell scripts, secrets
+        run: make check
+      - name: Lint the workflows
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7 -color
+
+  docs:
+    name: Documentation builds in strict mode
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pip install -r docs/requirements.txt
+      - run: mkdocs build --strict --site-dir build/site
+
+  agents:
+    name: Find the agents
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.find.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: find
+        # One job per agents/<name>/agent.env, so a new agent is built without touching this file.
+        run: |
+          matrix="$(for env in agents/*/agent.env; do
+              jq -cn --arg agent "$(basename "$(dirname "$env")")" \
+                     --arg language "$(sed -n 's/^LANGUAGE=//p' "$env")" \
+                     '{agent: $agent, language: $language}'
+            done | jq -sc .)"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          jq . <<<"$matrix"
+
+  build:
+    name: Build ${{ matrix.agent }}
+    needs: agents
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.agents.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+      - if: matrix.language == 'java'
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+      - if: matrix.language == 'node'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - if: matrix.language == 'python'
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+      - if: matrix.language == 'dotnet'
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Install the Brewlet CLI
+        run: scripts/install-brewlet.sh
+      - name: Build the artifact (code, dependencies, launch.json)
+        env:
+          AGENT: ${{ matrix.agent }}
+        run: make build AGENT="$AGENT"
+      - name: Show the digest
+        env:
+          AGENT: ${{ matrix.agent }}
+        run: |
+          {
+            echo "### $AGENT"
+            echo
+            echo "Artifact digest: \`$(jq -r .digest "build/agents/$AGENT/build-result.json")\`"
+          } >> "$GITHUB_STEP_SUMMARY"

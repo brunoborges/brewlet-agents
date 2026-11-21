@@ -1,0 +1,13 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+# One node keeps the laptop footprint small. The control-plane node is also the
+# Brewlet worker (NodeProfile.spec.nodePool.includeControlPlane=true).
+nodes:
+  - role: control-plane
+# Lets kubelet's CRI pull application images through
+# /etc/containerd/certs.d/<registry>/hosts.toml, which scripts/cluster-up.sh
+# writes so that localhost:5001 resolves to the in-network registry container.
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      config_path = "/etc/containerd/certs.d"

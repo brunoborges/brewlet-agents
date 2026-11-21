@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: java-spring-concierge
+  main:
+    banner-mode: "off"
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+
+copilot:
+  # The Copilot CLI runs in the sidecar container of the same Pod. Both values come from the
+  # Pod spec; there are deliberately no defaults, so a misconfigured Pod fails at startup.
+  cli-url: ${COPILOT_CLI_URL}
+  tcp-connection-token: ${COPILOT_CONNECTION_TOKEN}
+  sessions:
+    cleanup:
+      max-age: 1h
+  agents:
+    concierge:
+      # An allow-list over every tool source: only the agent's own runtime_facts tool. Excluding the
+      # CLI's built-in tools (built-in-tools: false) is not enough, because the CLI's GitHub MCP
+      # tools and web_search stay callable.
+      available-tools: ["custom:*"]
+      response-timeout: 2m
+      permissions:
+        allow-agent-tools: true
