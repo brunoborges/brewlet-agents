@@ -80,7 +80,15 @@ executable form of this contract.
 
 `POST /ask` takes `{"question": "...", "conversationId": "..."}`. `question` is required (at most
 4000 characters). `conversationId` is optional (`[A-Za-z0-9._:/-]{1,128}`); the agent generates a UUID
-when it is omitted, and reuses the same Copilot session for the same id.
+when it is omitted, and reuses the same Copilot session for the same id. The response always carries
+the caller's own id back.
+
+> [!NOTE]
+> The conversation id is not the Copilot session id. The sidecar only accepts session ids made of
+> `[A-Za-z0-9_-]`, narrower than the contract. An agent therefore maps the conversation id to a session
+> id by hashing it (the Java, Node.js and Python integrations do this themselves; the .NET agent does it
+> in its own code). The smoke test sends an id that uses every allowed character, so a framework that
+> passes the id through unchanged fails it.
 
 | Status | Body | When |
 |--------|------|------|

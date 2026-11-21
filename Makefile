@@ -8,7 +8,7 @@ AGENTS := $(sort $(patsubst agents/%/agent.env,%,$(wildcard agents/*/agent.env))
 MKDOCS_IMAGE := squidfunk/mkdocs-material:$(shell sed -n 's/^MKDOCS_MATERIAL_VERSION=//p' versions.env)
 
 .PHONY: help doctor list up cluster runtimes sidecar down build publish deploy smoke undeploy agent \
-        agents build-all auth deauth status logs ask whoami layers footprint rotate rotate-status clean docs docs-serve \
+        agents build-all auth deauth status logs ask whoami inspect layers footprint rotate rotate-status clean docs docs-serve \
         check check-agent
 
 help: ## Show this help
@@ -77,6 +77,9 @@ ask: check-agent ## Ask AGENT a question: make ask AGENT=java-spring Q="Which JD
 
 whoami: check-agent ## Print what AGENT reports about the runtime it is running on (its /runtime document)
 	@scripts/agent-ask.sh $(AGENT) --runtime
+
+inspect: check-agent ## Show how AGENT's Pod is put together: runtime, artifact, sidecar, and who gets the token
+	@scripts/agent-inspect.sh $(AGENT)
 
 # --- All agents ----------------------------------------------------------------------------------
 build-all: ## Build and publish every agent (no cluster deployment)

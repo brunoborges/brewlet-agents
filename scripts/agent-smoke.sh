@@ -94,8 +94,21 @@ expect "POST /ask rejects an empty question" 400 '.error == "bad_request"'
 call POST /ask '{"question":"hi","conversationId":"has spaces!"}'
 expect "POST /ask rejects a malformed conversationId" 400 '.error == "bad_request"'
 
+# repeat N: N times the letter a.
+repeat() { printf '%*s' "$1" '' | tr ' ' a; }
+call POST /ask "$(jq -nc --arg id "$(repeat 129)" '{question:"hi",conversationId:$id}')"
+expect "POST /ask rejects a conversationId longer than 128 characters" 400 '.error == "bad_request"'
+call POST /ask "$(jq -nc --arg q "$(repeat 4001)" '{question:$q}')"
+expect "POST /ask rejects a question longer than 4000 characters" 400 '.error == "bad_request"'
+
+# Every character the contract allows in a conversationId, including the ones a Copilot session id
+# cannot contain: the agent maps the id to a session id the sidecar accepts.
+awkward_id='smoke.test:1/a-b_c'
+
 authenticated="$(jq -r '.copilot.cli.authenticated // false' "$work/runtime.json")"
 if [ "$authenticated" = "true" ]; then
+  CALL_TIMEOUT=150 call POST /ask "$(jq -nc --arg id "$awkward_id" '{question:"Reply with the single word OK.",conversationId:$id}')"
+  expect "POST /ask accepts every character the contract allows in a conversationId" 200 ".conversationId == \"$awkward_id\""
   CALL_TIMEOUT=150 call POST /ask '{"question":"Which language runtime and which Copilot CLI version are you running on? Use your tool. Answer in two short sentences."}'
   expect "POST /ask returns a model answer" 200 '(.answer | length > 0) and (.conversationId | length > 0)'
   [ "$code" != 200 ] || printf '    \033[2m%s\033[0m\n' "$(jq -r .answer "$work/body" | head -c 400)"
@@ -108,7 +121,7 @@ if [ "$authenticated" = "true" ]; then
 elif [ "${REQUIRE_AUTH:-0}" = "1" ]; then
   fail "the Copilot CLI is not authenticated; run 'make auth'"
 else
-  call POST /ask '{"question":"hello"}'
+  call POST /ask "$(jq -nc --arg id "$awkward_id" '{question:"hello",conversationId:$id}')"
   expect "POST /ask reports missing credentials instead of hanging" 503 '.error == "copilot_not_authenticated"'
   warn "live /ask skipped: the Copilot CLI sidecar has no GitHub credentials (run 'make auth')"
 fi

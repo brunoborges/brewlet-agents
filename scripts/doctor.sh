@@ -36,14 +36,34 @@ require jq jq --version
 require curl sh -c 'curl --version | head -n1'
 require openssl openssl version
 
+too_old() { # too_old TOOL MIN-MAJOR PURPOSE: reads TOOL's major version on stdin, warns when it is lower
+  local tool="$1" want="$2" purpose="$3" have
+  have="$(cat)"
+  case "$have" in '' | *[!0-9]*) return 0 ;; esac
+  [ "$have" -ge "$want" ] \
+    || printf '    \033[33m!\033[0m %s %s is too old for %s: it needs %s or newer\n' "$tool" "$have" "$purpose" "$want"
+}
+
 log "language toolchains (needed per agent)"
 optional java "the Java agents (JDK 25)" java -version
+java -version 2>&1 | sed -n 's/.*version "\([0-9]*\).*/\1/p' | head -n1 | too_old java 25 "the Java agents"
 optional node "the Node.js agents (Node 24 or newer)" node --version
+node --version 2>/dev/null | sed -n 's/^v\([0-9]*\).*/\1/p' | too_old node 24 "the Node.js agents"
 optional npm "the Node.js agents" npm --version
-optional python3 "the Python agents" python3 --version
-optional uv "the Python agents (fetches Python 3.13 and the wheels)" uv --version
+optional uv "the Python agents (it fetches Python 3.13 and the wheels, so no system Python is needed)" uv --version
 optional dotnet "the .NET agent (.NET 10 SDK)" dotnet --version
+dotnet --version 2>/dev/null | sed -n 's/^\([0-9]*\)\..*/\1/p' | too_old dotnet 10 "the .NET agent"
 optional mvn "the Java agents (the Maven Wrapper of the integrations is used otherwise)" mvn --version
+
+log "make check (optional)"
+if command -v ruby >/dev/null 2>&1; then
+  printf '  \033[32m✓\033[0m %-9s %s\n' ruby "$(ruby --version 2>&1 | head -n1)"
+elif python3 -c 'import yaml' >/dev/null 2>&1; then
+  printf '  \033[32m✓\033[0m %-9s with PyYAML\n' python3
+else
+  printf '  \033[33m-\033[0m %-9s not found (make check parses YAML with Ruby, or with Python and PyYAML)\n' ruby
+fi
+optional shellcheck "make check (lints the scripts; skipped without it)" shellcheck --version
 
 log "cluster"
 if [ -f "$KUBECONFIG" ] && kube get nodes >/dev/null 2>&1; then
