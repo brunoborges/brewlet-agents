@@ -36,6 +36,21 @@ require jq jq --version
 require curl sh -c 'curl --version | head -n1'
 require openssl openssl version
 
+log "docker resources"
+# The cluster, the registry and all eight agents take about 3 GiB of the Docker VM. Docker reports a
+# little less than it was given (a 4 GiB VM shows about 3.75 GiB), so the warning starts at 3.5 GiB.
+docker_mib="$(docker info --format '{{.MemTotal}}' 2>/dev/null | awk '{ printf "%d", $1 / 1048576 }')"
+case "$docker_mib" in
+  '' | *[!0-9]*) printf '  \033[33m-\033[0m %-9s could not read the memory of the Docker VM\n' memory ;;
+  *)
+    if [ "$docker_mib" -ge 3584 ]; then
+      printf '  \033[32m✓\033[0m %-9s %s MiB for Docker\n' memory "$docker_mib"
+    else
+      printf '  \033[33m!\033[0m %-9s Docker has %s MiB; give it 4 GiB (Docker Desktop: Settings, Resources) to run all eight agents\n' memory "$docker_mib"
+    fi
+    ;;
+esac
+
 too_old() { # too_old TOOL MIN-MAJOR PURPOSE: reads TOOL's major version on stdin, warns when it is lower
   local tool="$1" want="$2" purpose="$3" have
   have="$(cat)"
