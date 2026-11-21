@@ -78,7 +78,7 @@ deauth: ## Remove the GitHub token from the cluster again
 
 status: ## Show the agents' Pods and the Brewlet runtimes
 	@KUBECONFIG=build/kubeconfig kubectl -n agents get pods -o wide
-	@KUBECONFIG=build/kubeconfig PATH=$$PWD/.bin:$$PATH brewlet k8s runtime status
+	@KUBECONFIG=build/kubeconfig kubectl get runtimeimages
 
 rotate: ## Demo: Ops rotates the java-25 runtime; no agent is rebuilt
 	@scripts/demo-rotation.sh
