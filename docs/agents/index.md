@@ -40,7 +40,7 @@ language, which talks to the Copilot CLI sidecar and never bundles it.
 | Runtime image | Microsoft Build of OpenJDK 25, distroless | distroless Node.js 24 | distroless Python 3.13 | ASP.NET 10, Azure Linux distroless |
 | Entrypoint | `java -jar` | `node dist/main.js` | `python3 -m concierge` | `dotnet Concierge.dll` |
 | What `deps` holds | The jars | `node_modules` | `site-packages` | The published assemblies |
-| Built for Linux on a Mac by | Maven, which is platform-independent | `npm ci --os=linux --cpu=… --libc=glibc` | `uv pip install --python-platform …` | `dotnet publish -r linux-<arch>` |
+| Built for Linux on a Mac by | Maven, which is platform-independent | `npm install --os=linux --cpu=… --libc=glibc` | `uv pip install --python-platform …` | `dotnet publish -r linux-<arch>` |
 
 Each agent's own page, rendered from its `README.md`, lists the framework-specific decisions and the
 traps found while building it.
