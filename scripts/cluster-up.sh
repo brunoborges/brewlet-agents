@@ -3,11 +3,12 @@
 #   1. a plain-HTTP OCI registry on localhost:$REGISTRY_PORT
 #   2. a single-node kind cluster named $CLUSTER_NAME with a private kubeconfig
 #   3. containerd on the node wired to that registry
-#   4. Brewlet (operator, node provisioner, admission webhook) via Helm
+#   4. Brewlet (operator, node provisioner, admission webhook) via Helm, with rotation restarts
+#      enabled for the agents' namespace
 # Safe to re-run. It never touches other kind clusters.
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
-need docker kind kubectl helm curl
+need docker kind kubectl helm curl jq
 
 "$ROOT/scripts/install-brewlet.sh"
 mkdir -p "$BUILD_DIR"
@@ -50,12 +51,22 @@ done
 ok "containerd on the node maps ${REGISTRY_HOST} -> http://${REGISTRY_NAME}:5000"
 
 # --- 4. Brewlet ---------------------------------------------------------------
-if helm --kubeconfig "$KUBECONFIG" --kube-context "kind-${CLUSTER_NAME}" status brewlet -n brewlet >/dev/null 2>&1; then
-  ok "Brewlet already installed"
+# Rotation restarts let Brewlet's operator roll the agents after Ops rotates a runtime, but only
+# the Deployments that opt in (brewlet.sh/restart-on-rotation) and only in the namespaces listed
+# here. The chart creates the operator's Role in each of them, so the namespace has to exist first.
+ensure_agent_namespace
+
+helm_cluster=(--kubeconfig "$KUBECONFIG" --kube-context "kind-${CLUSTER_NAME}")
+if helm "${helm_cluster[@]}" get values brewlet -n brewlet -o json 2>/dev/null \
+    | jq -e --arg ns "$AGENT_NAMESPACE" '.operator.rotationRestarts.enabled == true and (.operator.rotationRestarts.namespaces // [] | index($ns)) != null' >/dev/null 2>&1; then
+  ok "Brewlet already installed with rotation restarts for namespace $AGENT_NAMESPACE"
 else
-  log "installing Brewlet ${BREWLET_VERSION}"
-  helm --kubeconfig "$KUBECONFIG" --kube-context "kind-${CLUSTER_NAME}" install brewlet "$BREWLET_CHART" \
-    --version "$BREWLET_VERSION" --namespace brewlet --create-namespace --wait --timeout 10m
+  log "installing Brewlet ${BREWLET_VERSION} (rotation restarts on for namespace ${AGENT_NAMESPACE})"
+  helm "${helm_cluster[@]}" upgrade --install brewlet "$BREWLET_CHART" \
+    --version "$BREWLET_VERSION" --namespace brewlet --create-namespace --reuse-values \
+    --set operator.rotationRestarts.enabled=true \
+    --set "operator.rotationRestarts.namespaces={${AGENT_NAMESPACE}}" \
+    --wait --timeout 10m
 fi
 
 kube -n brewlet get pods

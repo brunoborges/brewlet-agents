@@ -62,6 +62,10 @@ registry_digest() {
 
 kube() { kubectl --kubeconfig "$KUBECONFIG" --context "kind-${CLUSTER_NAME}" "$@"; }
 
+# GET /runtime of a deployed agent through the API server's service proxy: no port-forward to
+# start or stop. Prints the JSON document the Runtime Concierge builds from its live process.
+agent_runtime() { kube get --raw "/api/v1/namespaces/${AGENT_NAMESPACE}/services/$1:80/proxy/runtime"; }
+
 # The agents' namespace. Pod Security "restricted" is enforced, so every agent Pod has to comply.
 ensure_agent_namespace() {
   kube get namespace "$AGENT_NAMESPACE" >/dev/null 2>&1 || kube create namespace "$AGENT_NAMESPACE" >/dev/null

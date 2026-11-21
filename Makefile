@@ -5,7 +5,8 @@ SHELL := /usr/bin/env bash
 AGENTS := $(sort $(patsubst agents/%/agent.env,%,$(wildcard agents/*/agent.env)))
 
 .PHONY: help doctor list up cluster runtimes sidecar down build publish deploy smoke undeploy agent \
-        agents build-all auth deauth status logs rotate clean docs docs-serve check-agent
+        agents build-all auth deauth status logs rotate rotate-status clean docs docs-serve check \
+        check-agent
 
 help: ## Show this help
 	@echo "Usage: make <target> [AGENT=<name>]"; echo
@@ -80,10 +81,16 @@ status: ## Show the agents' Pods and the Brewlet runtimes
 	@KUBECONFIG=build/kubeconfig kubectl -n agents get pods -o wide
 	@KUBECONFIG=build/kubeconfig kubectl get runtimeimages
 
-rotate: ## Demo: Ops rotates the java-25 runtime; no agent is rebuilt
-	@scripts/demo-rotation.sh
+rotate: ## Demo: Ops rotates the java-25 runtime and every Java agent follows; no agent is rebuilt
+	@scripts/demo-rotation.sh all
+
+rotate-status: ## Show the JDK each Java agent runs on, next to its (unchanged) artifact digest
+	@scripts/demo-rotation.sh status
 
 # --- Housekeeping --------------------------------------------------------------------------------
+check: ## Static checks: the agent contract, launch.json, scripts and manifests (no cluster needed)
+	@scripts/check.sh
+
 clean: ## Remove build output (keeps the cluster)
 	rm -rf build/agents build/integrations
 

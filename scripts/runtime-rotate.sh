@@ -3,12 +3,15 @@
 #
 #   scripts/runtime-rotate.sh <runtime-id> <image>
 #
-# <image> is a tag or digest. Running Pods keep the generation they started with;
-# restart them to pick up the new one:
+# <image> is a tag or a digest. The node installs the new generation next to the old one. Running
+# Pods keep the generation they started with and new Pods get the new one. Brewlet's operator
+# replaces the Pods of Deployments that opted in with brewlet.sh/restart-on-rotation when the Helm
+# chart enables operator.rotationRestarts (scripts/cluster-up.sh does). Restart anything else
+# yourself:
 #   kubectl -n agents rollout restart deployment
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
-need kubectl brewlet
+need kubectl brewlet jq
 
 [ "$#" -eq 2 ] || die "usage: $(basename "$0") <runtime-id> <image>"
 id="$1" image="$2"
@@ -18,8 +21,21 @@ case "$image" in
   localhost:*|127.0.0.1:*) flags+=(--insecure) ;;   # the local registry speaks plain HTTP
 esac
 
-log "rotating runtime $id to $image"
+previous="$(kube get runtimeimage "$id" -o jsonpath='{.status.generation}')"
+log "rotating runtime $id (generation ${previous:-?}) to $image"
 brewlet k8s runtime rotate "$id" --image "$image" "${flags[@]}"
-kube wait --for=condition=Ready nodeprofile/local --timeout=10m
+
+# Rotation is done when the node runs a newer generation and RotationComplete observes the
+# current spec. Waiting on the generation alone would race the old, still-true condition.
+deadline=$((SECONDS + 900))
+until kube get runtimeimage "$id" -o json | jq -e --argjson previous "${previous:-0}" '
+      .metadata.generation as $spec
+      | (.status.generation // 0) > $previous
+        and ([.status.conditions[]? | select(.type == "RotationComplete" and .status == "True" and .observedGeneration == $spec)] | length == 1)
+    ' >/dev/null; do
+  [ "$SECONDS" -lt "$deadline" ] || die "runtime $id did not finish rotating within 15 minutes: brewlet k8s runtime status $id"
+  sleep 3
+done
+
 brewlet k8s runtime status "$id"
-ok "runtime $id rotated; restart the agents to use it: kubectl -n ${AGENT_NAMESPACE} rollout restart deployment"
+ok "runtime $id is at generation $(kube get runtimeimage "$id" -o jsonpath='{.status.generation}'); new Pods use it"

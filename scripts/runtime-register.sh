@@ -35,7 +35,7 @@ register() {
   description="$(env_value "$file" DESCRIPTION)"
 
   if kube get runtimeimage "$id" >/dev/null 2>&1; then
-    ok "runtime $id is already approved (use 'make runtime-rotate' to change its image)"
+    ok "runtime $id is already approved (scripts/runtime-rotate.sh changes its image)"
   else
     log "approving runtime $id: $description"
     local args=(k8s runtime add "$id" --image "$image" --uid "$uid" --gid "$gid"
