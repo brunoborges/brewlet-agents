@@ -64,6 +64,28 @@ on purpose, so the Pod is never restarted for a dependency's sake.
 | 502 `agent_error` | The SDK reported another failure. | `make logs AGENT=<name>`. |
 | 400 `bad_request` | The question is missing, empty or over 4000 characters, or the conversation id is malformed. | Fix the request. |
 
+## Rotation
+
+See [patch day](rotation.md) for what the rotation does. Three things you may meet when you run it:
+
+* **The agents still run the old JDK after `make rotate`.** Only Pods that start after a rotation use the
+  new generation. `scripts/demo-rotation.sh` waits a minute for Brewlet's operator to restart the agents
+  and otherwise runs `kubectl rollout restart` itself. By hand:
+  `kubectl -n agents rollout restart deployment`. See [how the Pods follow](rotation.md#how-the-pods-follow).
+* **`note: current source could not be inspected for compatibility comparison: … DigestMismatch`.**
+  It appears when the rewind rotates *away from* the Microsoft-registry image. The Brewlet CLI could not
+  fetch that old source again to compare it with the new image, and says so. The checks on the new image
+  (platforms and golden image config) still ran and passed, the rotation goes ahead, and rotating back prints
+  no note. A plain `curl` of the same digest from `mcr.microsoft.com` returns bytes with the expected
+  SHA-256, so the image is not corrupt; the cause is not known. In a real rotation, a skipped comparison
+  means nothing warns you about a change between the old and the new image, so read the impact report
+  yourself.
+* **`the RuntimeImage changed while the CLI was patching it (attempt 1 of 5); asking again`.** Brewlet's
+  operator updates the `RuntimeImage` status about every 30 seconds, even when nothing is happening, and
+  `brewlet k8s runtime rotate` reads the object and then patches it. When the two cross, the API server
+  answers `the object has been modified` and nothing is written. `scripts/runtime-rotate.sh` asks again, up
+  to five times. If you run the Brewlet command by hand and see that error, run it again.
+
 ## Builds
 
 * **Maven Central or npm is flaky.** The build scripts retry downloads. If one still fails, run the

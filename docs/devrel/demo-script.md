@@ -146,12 +146,39 @@ scripts/demo-rotation.sh current
 > "This is last quarter's JDK. A patch has shipped. I am the Ops team, I do one thing: point the `java-25`
 > runtime at the new image."
 
-`scripts/demo-rotation.sh current` rotates it. Brewlet installs the new generation on the node, the
-operator replaces the agents' Pods, and the script prints the table again, with the new JDK next
-to **the same artifact digests**.
+`scripts/demo-rotation.sh current` rotates it. It takes about 20 seconds. Brewlet prints what the rotation
+will touch, installs the new generation on the node next to the old one, and the operator replaces the
+agents' Pods, one Deployment at a time. Then the script prints the table again:
+
+```text
+==> runtime java-25: generation 3, image sha256:e84386716537
+  AGENT            JDK (live, from /runtime)  GEN  ARTIFACT (the app's own bytes)
+  java-micronaut   25.0.5.1+2-LTS Microsoft   3    sha256:1f6cfd677d3e
+  java-quarkus     25.0.5.1+2-LTS Microsoft   3    sha256:cf9b8898d7db
+  java-spring      25.0.5.1+2-LTS Microsoft   3    sha256:86643a3e65fe
+```
+
+The JDK went from 25.0.4.1 to 25.0.5.1 and the generation from 2 to 3. Every artifact digest is exactly
+what it was before. (Your digests will differ from these, but they will not change between your two
+tables.)
 
 > "Three frameworks, three teams, three artifacts, and not one of them was rebuilt, pushed or deployed
 > again. That is the point: **the runtime is a platform concern.**"
+
+??? tip "Optional: show that nobody noticed"
+    In a second terminal, start this before you rotate. It prints only failures, so a quiet terminal is
+    the point. In the reference run, the same loop over all three agents made 574 health checks across
+    the rewind and the patch day, and none failed.
+
+    ```bash
+    export KUBECONFIG=$PWD/build/kubeconfig PATH=$PWD/.bin:$PATH
+    while sleep 0.2; do
+      kubectl get --raw /api/v1/namespaces/agents/services/java-spring:80/proxy/healthz >/dev/null 2>&1 \
+        || echo "FAIL $(date +%T)"
+    done
+    ```
+
+    It covers health checks, not an `/ask` that is in flight when its Pod is replaced. Say so if asked.
 
 !!! warning "Say the limit out loud"
     Rotation moves the *language runtime*. A vulnerable library inside an artifact, such as Jackson or a

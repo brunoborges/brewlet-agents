@@ -353,6 +353,34 @@ read:
 The point of the lab is the last column. Three frameworks, three teams and three artifacts moved to a
 new JDK without a rebuild, a push or a deploy.
 
+Each rotation takes about 20 seconds. After the rewind, the JDK column reads `25.0.4.1+1-LTS Microsoft`.
+After the patch day, you should see something like this (your digests will differ, but the three artifact
+digests will be the same in both tables):
+
+```text
+==> runtime java-25: generation 3, image sha256:e84386716537
+  AGENT            JDK (live, from /runtime)  GEN  ARTIFACT (the app's own bytes)
+  java-micronaut   25.0.5.1+2-LTS Microsoft   3    sha256:1f6cfd677d3e
+  java-quarkus     25.0.5.1+2-LTS Microsoft   3    sha256:cf9b8898d7db
+  java-spring      25.0.5.1+2-LTS Microsoft   3    sha256:86643a3e65fe
+```
+
+??? question "Challenge: did anybody notice?"
+    Run this in a third terminal before `make rotate`. It prints only failures, so silence is the good
+    result. In the reference run, the same loop over all three agents made 574 health checks across the
+    rewind and the patch day, and none failed.
+
+    ```bash
+    export KUBECONFIG=$PWD/build/kubeconfig PATH=$PWD/.bin:$PATH
+    while sleep 0.2; do
+      kubectl get --raw /api/v1/namespaces/agents/services/java-spring:80/proxy/healthz >/dev/null 2>&1 \
+        || echo "FAIL $(date +%T)"
+    done
+    ```
+
+    Why is that not the whole story? It checks health, not a `/ask` that is in flight when its Pod is
+    replaced, and a model call can take several seconds.
+
 ??? question "Why did the Pods restart? Doesn't Brewlet do that on its own?"
     No: Brewlet keeps running tasks on the generation they started with, and does not restart them. This
     project enables its opt-in rotation restarts (`operator.rotationRestarts` in the Helm chart) for the
