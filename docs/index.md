@@ -52,6 +52,11 @@ flowchart LR
    [the agents overview](agents/index.md).
 3. **Patch the Java runtime.** Follow the [runtime rotation guide](rotation.md) to update the JDK
    for all three Java agents without rebuilding their artifacts.
+4. **Summarize a Wikipedia article.** The [Wikipedia summarizer](apps/wikipedia-summarizer.md) is a Spring Boot
+   agent with a REST API, and the [Node.js front-end](apps/wikipedia-frontend.md) puts a page in front of it.
+5. **Watch it run.** [Observability and dashboards](observability.md): the Brewlet dashboard, the
+   [jlib-inspector](apps/jlib-ui.md) dashboard for the jars each JVM loads, and an OpenTelemetry dashboard,
+   fed by a custom `java-25-jlib` runtime.
 
 ## Where to read next
 
@@ -60,6 +65,8 @@ flowchart LR
 | Why the Copilot CLI is a sidecar and the runtime is framework-agnostic | [Design](design.md) |
 | What runs where, and how a build becomes a Pod | [Architecture](architecture.md) |
 | How to let the agents call the model | [GitHub authentication](authentication.md) |
+| How the apps differ from the agents, and what each one is | [Apps](apps/index.md) |
+| The dashboards, and the runtime that feeds them | [Observability and dashboards](observability.md) |
 | What is and is not locked down | [Security model](security.md) |
 | What to do when something is stuck | [Troubleshooting](troubleshooting.md) |
 | Every command, script and pinned version | [Reference](reference.md) |

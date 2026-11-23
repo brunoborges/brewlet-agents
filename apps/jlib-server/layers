@@ -1,0 +1,3 @@
+# One Brewlet layer per line: <directory under the build output>:<path inside /app>.
+# The server is one jar and a logging configuration, so one layer holds both.
+app:/app

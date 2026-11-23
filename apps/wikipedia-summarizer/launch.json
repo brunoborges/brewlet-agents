@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "process": {
+    "entrypoint": ["/usr/jdk/bin/java"],
+    "args": ["-XX:MaxRAMPercentage=70", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app.jar"],
+    "workingDir": "/app"
+  },
+  "runtimeImages": ["java-25-jlib"]
+}

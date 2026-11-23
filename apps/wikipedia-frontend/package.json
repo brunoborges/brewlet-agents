@@ -1,0 +1,14 @@
+{
+  "name": "wikipedia-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A small Node.js front-end for the wikipedia-summarizer agent",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "node --test"
+  }
+}

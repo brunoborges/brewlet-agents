@@ -10,6 +10,10 @@ on:
         description: Agents to deploy, separated by spaces (make list shows them all)
         type: string
         default: java-spring node-fastify python-fastapi dotnet-aspnet
+      apps:
+        description: Also deploy the observability stack, the Wikipedia summarizer and its front-end, and check the dashboards
+        type: boolean
+        default: true
       rotation:
         description: Also run the runtime rotation demo (make rotate); needs a Java agent in the list
         type: boolean
@@ -31,6 +35,8 @@ jobs:
     timeout-minutes: 90
     env:
       AGENTS: ${{ inputs.agents || 'java-spring node-fastify python-fastapi dotnet-aspnet' }}
+      # The scheduled run has no inputs, so it always includes the apps.
+      RUN_APPS: ${{ github.event_name == 'schedule' || inputs.apps }}
       # A boolean only: the token itself is handed to the one step that needs it.
       HAS_COPILOT_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN != '' }}
     steps:
@@ -62,6 +68,12 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: Deploy the telemetry stack, the Wikipedia summarizer and its front-end
+        if: env.RUN_APPS == 'true'
+        run: |
+          make observability
+          make wikipedia
+
       - name: Give the Copilot CLI sidecar a GitHub token and run the live checks
         if: env.HAS_COPILOT_TOKEN == 'true'
         env:
@@ -73,9 +85,21 @@ jobs:
             REQUIRE_AUTH=1 make smoke AGENT="$agent"
             echo "::endgroup::"
           done
+          if [ "$RUN_APPS" = true ]; then
+            echo "::group::wikipedia-summarizer"
+            REQUIRE_AUTH=1 make smoke APP=wikipedia-summarizer
+            make summarize URL=https://en.wikipedia.org/wiki/Kubernetes VIA=frontend
+            echo "::endgroup::"
+          fi
       - name: Explain why the live checks were skipped
         if: env.HAS_COPILOT_TOKEN != 'true'
         run: echo "::notice::The secret COPILOT_GITHUB_TOKEN is not set, so only the checks that need no model ran."
+
+      - name: Check that telemetry reached both back ends and that every dashboard answers
+        if: env.RUN_APPS == 'true'
+        run: |
+          make telemetry
+          scripts/dashboards.sh --check
 
       - name: Rotate the java-25 runtime and watch the Java agents follow
         if: inputs.rotation
@@ -92,3 +116,17 @@ jobs:
             make logs AGENT="$agent" || true
             echo "::endgroup::"
           done
+          if [ "$RUN_APPS" = true ]; then
+            kubectl -n observability get events --sort-by=.lastTimestamp | tail -n 40 || true
+            for app in wikipedia-summarizer wikipedia-frontend; do
+              echo "::group::logs of $app"
+              make logs APP="$app" || true
+              echo "::endgroup::"
+            done
+            # Not the dashboard's own log: it prints the address that signs in to the dashboard.
+            for deployment in jlib-server jlib-ui; do
+              echo "::group::logs of $deployment"
+              kubectl -n observability logs "deployment/$deployment" --tail=60 || true
+              echo "::endgroup::"
+            done
+          fi

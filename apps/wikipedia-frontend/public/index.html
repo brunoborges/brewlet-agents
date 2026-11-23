@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wikipedia summarizer</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main>
+    <h1>Wikipedia summarizer</h1>
+    <p class="lede">Paste the address of a Wikipedia article. A Copilot SDK agent running on Kubernetes reads it and writes the summary.</p>
+
+    <form id="summarize-form">
+      <label for="article-url">Article URL</label>
+      <div class="row">
+        <input id="article-url" name="url" type="url" required autocomplete="off" spellcheck="false"
+               placeholder="https://en.wikipedia.org/wiki/Java_(programming_language)">
+        <button type="submit">Summarize</button>
+      </div>
+    </form>
+
+    <p id="status" role="status" hidden></p>
+    <article id="result" hidden></article>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 Start with what is running:
 
 ```bash
-make status                      # the agents' Pods and the Brewlet runtimes
+make status                      # the Pods of the agents, the apps and the observability stack, and the Brewlet runtimes
 make logs AGENT=java-spring      # the agent's log, then the sidecar's
 make doctor                      # the host tools
 ```
@@ -64,6 +64,23 @@ on purpose, so the Pod is never restarted for a dependency's sake.
 | 502 `agent_error` | The SDK reported another failure. | `make logs AGENT=<name>`. |
 | 400 `bad_request` | The question is missing, empty or over 4000 characters, or the conversation id is malformed. | Fix the request. |
 
+## The Wikipedia summarizer and the dashboards
+
+`make logs APP=wikipedia-summarizer` shows the summarizer's log and its sidecar's. The agent endpoints
+(`/readyz`, and the 503 `copilot_not_authenticated` and `copilot_unavailable` of the table above) behave the
+same way for the summarizer; the errors of `POST /api/summaries` are in its
+[documentation](apps/wikipedia-summarizer.md#the-api).
+
+| Symptom | Likely cause | What to do |
+|---------|--------------|------------|
+| `make summarize` answers 503 `copilot_not_authenticated` | The sidecar has no GitHub credentials. | `make auth`. |
+| `make wikipedia` stops at the smoke test with a 502 or 504 | Wikipedia or the model was slow or unreachable from the node. | Run `make smoke APP=wikipedia-summarizer` again, then `make logs APP=wikipedia-summarizer`. |
+| `make dashboards` says a port is in use | The ports are fixed: 8088, 3000 and 3001, 18888, 8080. | Stop the process that holds it, or open only the others: `make dashboards DASHBOARDS="otel brewlet"`. |
+| The Brewlet dashboard rejects its token | The token expires after one hour. | Run `make dashboards` again for a new one. |
+| The jlib-inspector dashboard shows no application | None is reporting, or the browser cannot reach port 3001. | `make telemetry` says which back end is empty. Then check that `make wikipedia` deployed the summarizer and that nothing else holds port 3001. |
+| `make telemetry` reports nothing from Aspire | The Pod was built on `java-25` instead of `java-25-jlib`, or its `OTEL_EXPORTER_OTLP_ENDPOINT` does not name the dashboard. | `make inspect APP=wikipedia-summarizer` lists the runtime and the variables (names only). The agent reports when the JVM starts and every 30 seconds, so give a new Pod a minute. |
+| Aspire asks for a token | Its address needs the token in the login link. | `make dashboards` prints the login link every time it runs. Do not paste it anywhere: it signs in to the dashboard. |
+
 ## Rotation
 
 See [patch day](rotation.md) for what the rotation does. Three things you may meet when you run it:
@@ -111,9 +128,9 @@ Docker image is the way around it: it already contains everything.
 
 | Command | What it removes |
 |---------|-----------------|
-| `make undeploy AGENT=<name>` | One agent. |
+| `make undeploy AGENT=<name>` | One agent or app (`make undeploy APP=<name>`). |
 | `make deauth` | The GitHub token from the cluster. |
-| `make clean` | Build output under `build/agents` and `build/integrations`. The cluster stays. |
+| `make clean` | Build output under `build/agents`, `build/apps` and `build/integrations`. The cluster stays. |
 | `make down` | The cluster and the local registry. |
 
 `make down` only touches the cluster and the registry created by this project (`brewlet-agents` and

@@ -9,7 +9,7 @@ From nothing to a Copilot agent running on a Brewlet runtime in your own kind cl
 | Docker | Runs the kind node, the local registry and the image builds. Give it at least 4 GiB of memory. |
 | `kind`, `kubectl`, `helm` | Cluster, client, and the Brewlet chart. |
 | `jq`, `curl`, `openssl` | Used by the scripts. |
-| A language toolchain per agent | Java 25 for the Java agents, Node.js 24 for Node.js, `uv` for Python, the .NET 10 SDK for .NET. You only need the ones for the agents you build. |
+| A language toolchain per agent or app | Java 25 for the Java agents and the Wikipedia summarizer, Node.js 24 (and `git`, for the jlib-inspector dashboard) for Node.js, `uv` for Python, the .NET 10 SDK for .NET. You only need the ones for what you build. |
 
 `make doctor` checks all of this and tells you what is missing. The Maven Wrapper that ships with
 the integrations is used when you do not have Maven.
@@ -29,7 +29,7 @@ make up
 | Step | What happens |
 |------|--------------|
 | `make cluster` | Creates the kind cluster `brewlet-agents` and a local registry on `localhost:5001`, installs Brewlet (the Helm chart and the node provisioner) and the `agents` namespace, and enables [rotation restarts](rotation.md) for it. |
-| `make runtimes` | Registers and approves the four Ops-owned runtimes from [`runtimes/`](https://github.com/brunoborges/brewlet-agents/tree/main/runtimes): `java-25`, `node-24`, `python-3.13`, `dotnet-10`. Each is a plain language image pinned by digest. |
+| `make runtimes` | Registers and approves the Ops-owned runtimes from [`runtimes/`](https://github.com/brunoborges/brewlet-agents/tree/main/runtimes): `java-25`, `node-24`, `python-3.13`, `dotnet-10`, and `java-25-jlib`, which is `java-25` with the [jlib-inspector](observability.md#the-java-25-jlib-runtime) agent that this step builds and pushes to the local registry first. Each is pinned by digest. |
 | `make sidecar` | Builds the Copilot CLI sidecar image (checksum-verified download of the pinned CLI release onto a distroless base) and pushes it to the local registry. |
 
 The first run downloads several images and installs the first runtime, which is the slow part and
@@ -72,13 +72,20 @@ make ask AGENT=java-spring Q="Which JDK are you running on, and where does your 
 ```
 
 `make auth` stores your GitHub token in a Kubernetes Secret that only the Copilot CLI sidecar can
-read. [GitHub authentication](authentication.md) explains what it stores, which tokens work, and how
+read. It uses `$COPILOT_GITHUB_TOKEN` when that is set, and `gh auth token --hostname github.com` otherwise:
+
+```bash
+export COPILOT_GITHUB_TOKEN="$(gh auth token --hostname github.com)"
+make auth
+```
+
+[GitHub authentication](authentication.md) explains what it stores, which tokens work, and how
 to remove it (`make deauth`).
 
 ## 4. The other frameworks
 
 ```bash
-make list           # the eight agents and their runtimes
+make list           # the eight agents and the four apps, with their runtimes
 make agents         # build, deploy and smoke-test all of them
 make agent AGENT=node-fastify
 ```
@@ -94,6 +101,30 @@ make rotate
 
 Ops patches the `java-25` runtime. The three Java agents restart on the new JDK; nothing is rebuilt
 and the artifact digests do not change. The [rotation demo](rotation.md) walks through it.
+
+## 6. The Wikipedia summarizer and the dashboards
+
+The [apps](apps/index.md) are workloads that do not follow the Runtime Concierge contract. The first is a Spring
+Boot agent with a REST API that summarizes a Wikipedia article; the others are a Node.js front-end for it and the
+stack that watches it run. The summarizer talks to the model, so do step 3 first.
+
+```bash
+make observability
+make wikipedia
+make summarize URL='https://en.wikipedia.org/wiki/Java_(programming_language)'
+make dashboards
+```
+
+| Target | What it does |
+|--------|--------------|
+| `make observability` | Deploys the Aspire OpenTelemetry dashboard, and the jlib-inspector server and dashboard, into the `observability` namespace. |
+| `make wikipedia` | Builds, publishes, deploys and smoke-tests the summarizer and its front-end. The summarizer runs on `java-25-jlib`, so the agent in that runtime reports what it loads. |
+| `make summarize` | Posts the article's address to the summarizer's REST API and prints the summary. `VIA=frontend` goes through the front-end. |
+| `make telemetry` | Checks that the agent's report reached the jlib-inspector server, and that logs, traces and metrics reached the Aspire dashboard. |
+| `make dashboards` | Forwards the Brewlet, jlib-inspector and OpenTelemetry dashboards and the front-end to your machine, and prints what each one needs to sign in. |
+
+[Observability and dashboards](observability.md) describes what each dashboard shows. The
+[Wikipedia summarizer](apps/wikipedia-summarizer.md) page has its API.
 
 ## Clean up
 

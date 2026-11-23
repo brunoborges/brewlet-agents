@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "process": {
+    "entrypoint": ["/usr/jdk/bin/java"],
+    "args": [
+      "-XX:MaxRAMPercentage=50",
+      "-XX:+ExitOnOutOfMemoryError",
+      "-Djava.util.logging.config.file=/app/logging.properties",
+      "-jar", "/app/jlib-inspector-server.jar",
+      "8080"
+    ],
+    "workingDir": "/app"
+  },
+  "runtimeImages": ["java-25"]
+}

@@ -3,71 +3,28 @@
 #
 #   scripts/agent-smoke.sh <agent>
 #
+# An app (apps/<name>) has no such contract, so this hands it to scripts/app-smoke.sh.
+#
 # It verifies the Runtime Concierge contract (agents/README.md) and prints the proof that matters
 # for the demo: the app lives under /app, the language runtime lives somewhere else, and the Copilot
 # CLI is a separate attached sidecar. A live model round trip needs credentials ('make auth'); set
 # REQUIRE_AUTH=1 to make that mandatory instead of optional.
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
+source "$(dirname "$0")/smoke-lib.sh"
 need kubectl curl jq
 
 agent="${1:-}"
-[ -n "$agent" ] || die "usage: $(basename "$0") <agent>"
+[ -n "$agent" ] || die "usage: $(basename "$0") <agent-or-app>"
+# Apps have no Runtime Concierge contract to check; they bring their own checks.
+[ "$(workload_kind "$agent")" = agents ] || exec "$(dirname "$0")/app-smoke.sh" "$agent"
 dir="$(agent_dir "$agent")"
 runtime="$(env_value "$dir/agent.env" RUNTIME)"
 [ -f "$KUBECONFIG" ] || die "no cluster: run 'make cluster' first"
 
-work="$(mktemp -d)"
-pf_pid=""
-cleanup() {
-  if [ -n "$pf_pid" ]; then
-    kill "$pf_pid" 2>/dev/null || true
-    wait "$pf_pid" 2>/dev/null || true
-  fi
-  rm -rf "$work"
-}
-trap cleanup EXIT
-
-# kubectl is started directly (not through the kube() function) so $! is its own PID.
-kubectl --kubeconfig "$KUBECONFIG" --context "kind-${CLUSTER_NAME}" -n "$AGENT_NAMESPACE" \
-  port-forward "svc/$agent" :80 >"$work/pf.log" 2>&1 &
-pf_pid=$!
-
-port=""
-for _ in $(seq 1 30); do
-  port="$(sed -n 's/.*127\.0\.0\.1:\([0-9][0-9]*\) -> .*/\1/p' "$work/pf.log" | head -n1)"
-  [ -z "$port" ] || break
-  kill -0 "$pf_pid" 2>/dev/null || { cat "$work/pf.log" >&2; die "port-forward to $agent failed"; }
-  sleep 1
-done
-[ -n "$port" ] || die "port-forward to $agent did not start"
-base="http://127.0.0.1:$port"
-
-failures=0
-pass() { printf '  \033[32m✓\033[0m %s\n' "$*"; }
-fail() { printf '  \033[31m✗\033[0m %s\n' "$*" >&2; failures=$((failures + 1)); }
-
-# call METHOD PATH [JSON]: leaves the HTTP status in $code and the body in $work/body.
-code=""
-call() {
-  local method="$1" path="$2" data="${3:-}"
-  local args=(-sS -m "${CALL_TIMEOUT:-20}" -o "$work/body" -w '%{http_code}' -X "$method")
-  [ -z "$data" ] || args+=(-H 'Content-Type: application/json' -d "$data")
-  code="$(curl "${args[@]}" "$base$path" 2>"$work/curl.err")" || { code=000; : > "$work/body"; }
-}
-
-# expect LABEL STATUS [JQ-FILTER]: the last call must return STATUS and, if given, a JSON body
-# for which the filter is true.
-expect() {
-  local label="$1" want="$2" filter="${3:-}"
-  if [ "$code" != "$want" ]; then
-    fail "$label: HTTP $code (wanted $want) $(head -c 300 "$work/body") $(cat "$work/curl.err")"
-  elif [ -n "$filter" ] && ! jq -e "$filter" "$work/body" >/dev/null 2>&1; then
-    fail "$label: unexpected body $(head -c 300 "$work/body")"
-  else
-    pass "$label"
-  fi
-}
+trap forward_stop EXIT
+forward_start "$AGENT_NAMESPACE" "$agent" 80
+base="http://127.0.0.1:$FORWARD_PORT"
 
 log "smoke-testing $agent (runtime $runtime) at $base"
 
@@ -84,7 +41,7 @@ expect "GET /runtime has the contract shape" 200 "
   and (.copilot.sdk.version | length > 0) and (.copilot.integration.version | length > 0)
   and (.copilot.cli.attached == true) and (.copilot.cli.version | length > 0)
   and (.deployment.runtimeId == \"$runtime\") and (.deployment.pod | length > 0)"
-cp "$work/body" "$work/runtime.json"
+runtime_json="$body"
 expect "the language runtime is not part of the app artifact" 200 '(.language.home | startswith("/app") | not)'
 expect "no GitHub identity is exposed" 200 'tostring | test("login|ghp_|gho_|github_pat_") | not'
 
@@ -105,13 +62,13 @@ expect "POST /ask rejects a question longer than 4000 characters" 400 '.error ==
 # cannot contain: the agent maps the id to a session id the sidecar accepts.
 awkward_id='smoke.test:1/a-b_c'
 
-authenticated="$(jq -r '.copilot.cli.authenticated // false' "$work/runtime.json")"
+authenticated="$(printf '%s' "$runtime_json" | jq -r '.copilot.cli.authenticated // false')"
 if [ "$authenticated" = "true" ]; then
   CALL_TIMEOUT=150 call POST /ask "$(jq -nc --arg id "$awkward_id" '{question:"Reply with the single word OK.",conversationId:$id}')"
   expect "POST /ask accepts every character the contract allows in a conversationId" 200 ".conversationId == \"$awkward_id\""
   CALL_TIMEOUT=150 call POST /ask '{"question":"Which language runtime and which Copilot CLI version are you running on? Use your tool. Answer in two short sentences."}'
   expect "POST /ask returns a model answer" 200 '(.answer | length > 0) and (.conversationId | length > 0)'
-  [ "$code" != 200 ] || printf '    \033[2m%s\033[0m\n' "$(jq -r .answer "$work/body" | head -c 400)"
+  [ "$code" != 200 ] || printf '    \033[2m%s\033[0m\n' "$(printf '%s' "$body" | jq -r .answer | head -c 400)"
   # Excluding the CLI's built-in tools is not enough: its GitHub MCP tools and web_search stay
   # callable. The agents allow-list only their own tool, and the model itself is the witness.
   CALL_TIMEOUT=150 call POST /ask '{"question":"List the exact names of every tool you are able to call right now, one per line. Do not call any of them. Do not explain."}'
@@ -133,7 +90,6 @@ jq -r '
   "  sdk        \(.copilot.sdk.name // "copilot-sdk") \(.copilot.sdk.version)  integration \(.copilot.integration.name // "") \(.copilot.integration.version)",
   "  cli        \(.copilot.cli.endpoint)  version \(.copilot.cli.version)  authenticated=\(.copilot.cli.authenticated)",
   "  deployment runtime=\(.deployment.runtimeId)  pod=\(.deployment.pod)  node=\(.deployment.node)"
-' "$work/runtime.json" >&2
+' <<<"$runtime_json" >&2
 
-[ "$failures" -eq 0 ] || die "$agent: $failures check(s) failed"
-ok "$agent passed the smoke test"
+smoke_result "$agent"

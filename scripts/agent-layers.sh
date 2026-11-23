@@ -14,7 +14,7 @@ need curl jq awk
 agent="${1:-}"
 [ -n "$agent" ] || die "usage: $(basename "$0") <agent> [--bytes]"
 dir="$(agent_dir "$agent")"
-pinned_file="$BUILD_DIR/agents/$agent/pinned"
+pinned_file="$(artifact_out "$agent")/pinned"
 [ -f "$pinned_file" ] || die "$agent is not published: run 'make publish AGENT=$agent' first"
 
 pinned="$(cat "$pinned_file")"

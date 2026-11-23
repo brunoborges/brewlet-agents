@@ -1,0 +1,3 @@
+# One Brewlet layer per line: <directory under the build output>:<path inside /app>.
+# The app has no dependencies, so its code is the only layer.
+code:/app

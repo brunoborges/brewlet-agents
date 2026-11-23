@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: wikipedia-summarizer
+  main:
+    banner-mode: "off"
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+
+# Traces and metrics leave over OTLP/HTTP. Where to is not set here: Spring Boot reads the standard
+# OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_SERVICE_NAME and OTEL_RESOURCE_ATTRIBUTES, which the Pod sets
+# for the OpenTelemetry dashboard. OTEL_TRACES_EXPORTER=none and OTEL_METRICS_EXPORTER=none turn
+# the export off.
+management:
+  tracing:
+    sampling:
+      # Every request is traced (Spring Boot's default is one in ten): the service handles few.
+      probability: 1.0
+  otlp:
+    metrics:
+      export:
+        step: 30s
+
+copilot:
+  # The Copilot CLI runs in the sidecar container of the same Pod. Both values come from the
+  # Pod spec; there are deliberately no defaults, so a misconfigured Pod fails at startup.
+  cli-url: ${COPILOT_CLI_URL}
+  # `connection-token` is a file in the directory that SPRING_CONFIG_IMPORT=configtree:/app/secrets/
+  # imports, mounted from the Secret copilot-cli. It is not an environment variable on purpose:
+  # the jlib-inspector agent of the java-25-jlib runtime reports every environment variable.
+  tcp-connection-token: ${connection-token}
+  sessions:
+    # Bounds every session call, including the delete after each summary, so a stuck CLI
+    # cannot hold a request for the default two minutes.
+    timeout: 5s
+    cleanup:
+      # Each summary is its own session and is deleted right after the request. This removes
+      # whatever a failed delete left behind.
+      max-age: 1h
+  agents:
+    summarizer:
+      # An allow-list over every tool source, and the app registers no tools: the model gets
+      # nothing to call, so it works from the article text alone. Without a permissions block
+      # the starter denies every permission request as well.
+      available-tools: ["custom:*"]
+      response-timeout: ${summarizer.model-timeout}
+
+summarizer:
+  # Environment overrides: SUMMARIZER_MODEL_TIMEOUT, SUMMARIZER_WIKIPEDIA_MAX_ARTICLE_CHARS, ...
+  model-timeout: 2m
+  wikipedia:
+    # About 15k tokens: enough for the long articles to be summarized from their start.
+    max-article-chars: 60000
+    max-response-bytes: 8388608
+    timeout: 10s
+    user-agent: wikipedia-summarizer/1.0 (https://github.com/brunoborges/brewlet-agents)

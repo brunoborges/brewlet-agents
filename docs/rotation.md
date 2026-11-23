@@ -173,8 +173,8 @@ has to restart the agents, and Brewlet makes that an explicit opt-in on two leve
 
 | Opt-in | Where | Set by |
 |--------|-------|--------|
-| `operator.rotationRestarts.enabled=true` (and, optionally, `namespaces`) | The Helm release of Brewlet | `scripts/cluster-up.sh` |
-| `brewlet.sh/restart-on-rotation: "true"` | The metadata of the **Deployment** | each `agents/<name>/deployment.yaml`, so every agent has it |
+| `operator.rotationRestarts.enabled=true` (and, optionally, `namespaces`) | The Helm release of Brewlet | `scripts/cluster-up.sh`, for the `agents` and `observability` namespaces |
+| `brewlet.sh/restart-on-rotation: "true"` | The metadata of the **Deployment** | each `agents/<name>/deployment.yaml` and `apps/<name>/deployment.yaml`, so every agent and app has it |
 
 With both set, the operator stamps the new generation on the Pod template of every Deployment that
 runs on the rotated runtime. That is an ordinary template change, so the Deployment's own rollout
@@ -190,6 +190,12 @@ kubectl -n agents rollout restart deployment
 
 `scripts/demo-rotation.sh` waits a minute for the operator, and does exactly that if the operator did
 not act.
+
+!!! note "A derived runtime is rotated on its own"
+    `java-25-jlib` is built from `java-25`, but it is a `RuntimeImage` of its own. Rotating `java-25` moves the
+    Java agents and jlib-server; the Wikipedia summarizer stays on its generation of `java-25-jlib` until Ops builds
+    that runtime again on the patched base and rotates it
+    ([how](observability.md#how-it-is-built-and-approved)).
 
 ## Try it by hand
 
