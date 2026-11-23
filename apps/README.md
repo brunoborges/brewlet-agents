@@ -47,7 +47,8 @@ Pod Security Standard. `make check` verifies the manifest of every app.
 ```text
 apps/<name>/
   app.env           APP_NAME, LANGUAGE, FRAMEWORK, RUNTIME, and optionally NAMESPACE, SERVICE_PORT, HEALTH_PATH, SIDECAR, INTEGRATIONS
-  build.sh          builds the app into $APP_DIR, tests included
+  Makefile          make run: build, publish, deploy and smoke-test this app
+  build.sh          directly runnable: stages the app, runs its build checks and packages its Brewlet artifact
   layers            one Brewlet layer per line: <directory under the build output>:<path inside /app>
   launch.json       how Brewlet starts it: entrypoint, arguments, working directory, environment, runtime id
   deployment.yaml   the complete Deployment, Service and ServiceAccount

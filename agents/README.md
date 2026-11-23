@@ -141,7 +141,8 @@ agents/<name>/
 ├── deployment.yaml the whole Kubernetes manifest: ServiceAccount, Deployment, Service
 ├── launch.json     Brewlet launch descriptor; runtimeImages lists RUNTIME
 ├── layers          optional: one "<directory under $APP_DIR>:<path in the artifact>" per line
-├── build.sh        fills $APP_DIR with the final linux/$ARCH file system
+├── Makefile        make run: build, publish, deploy and smoke-test this example
+├── build.sh        directly runnable: stages the linux/$ARCH files and builds the Brewlet artifact
 ├── README.md       what the example shows and the framework specifics
 └── <sources>
 ```
@@ -154,14 +155,14 @@ agents/<name>/
   changes is the two `image:` lines, which name tags in the file and get the digests that
   `make publish` and `make sidecar` pushed (`scripts/workloads/pin.sh`). `make check` fails if the file
   drifts from `agent.env` or `versions.env` (name, namespace, runtime, sidecar version).
-* `build.sh` runs with `APP_DIR` (output directory), `ARCH` (`arm64` or `amd64`) and
-  `INTEGRATIONS_OUT` (the pinned integrations for this language, built by
-  `scripts/integrations/build.sh`). Dependencies must be resolved for **linux/`$ARCH` and the
+* Run `./build.sh` without arguments or environment setup. Its `prepare_artifact` call sets
+  `APP_DIR` (staging directory), `ARCH` (`arm64` or `amd64`) and `INTEGRATIONS_OUT` (the pinned
+  integrations for this language). Dependencies must be resolved for **linux/`$ARCH` and the
   runtime's ABI**, not for the build host; Brewlet runs no package manager.
 * `layers` stacks layers in order. Put the stable, large layer (dependencies) first and the small,
   fast-changing one (your code) last, so a code change re-pushes kilobytes, not megabytes.
 * The artifact file system must be world-readable and free of extended attributes;
-  `scripts/workloads/build.sh` normalizes modes and strips macOS attributes before packaging.
+  `package_artifact` in `scripts/lib/artifact.sh` normalizes modes and strips macOS attributes before packaging.
 * `launch.json` is the only contract with the runtime: an absolute `entrypoint` (the runtime's
   interpreter), `args`, `workingDir: "/app"`, an `env` without `PATH`, and `runtimeImages`.
 

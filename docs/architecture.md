@@ -56,7 +56,7 @@ flowchart LR
   dir --> bb["brewlet build<br/>+ launch.json"]
   bb --> bp["brewlet push<br/>then brewlet verify"]
   bp --> dg["artifact digest"]
-  dg --> rn["agent-pin.sh<br/>pins the images in<br/>agents/&lt;name&gt;/deployment.yaml"]
+  dg --> rn["pin.sh<br/>pins the images in<br/>agents/&lt;name&gt;/deployment.yaml"]
   rn --> ap["kubectl apply"]
   ap --> pd["Pod: agent + copilot-cli"]
 ```
@@ -65,7 +65,7 @@ flowchart LR
 |------|--------|--------------|
 | Build the integrations | `scripts/integrations/build.sh` | Builds the pinned `copilot-sdk-integrations` commit for the agent's language, once. |
 | Fill the app directory | `agents/<name>/build.sh` | Resolves dependencies for the **target** (`linux/<arch>` and the runtime's libc), not for your laptop. Brewlet runs no package manager. |
-| Package | `scripts/workloads/build.sh` | Normalizes file modes, strips macOS extended attributes, and runs `brewlet build` with the agent's `layers` file. Dependencies go in the first layer and the code in the last, so a code change pushes kilobytes. |
+| Package | `package_artifact` in `scripts/lib/artifact.sh`, called by the example's `build.sh` | Normalizes file modes, strips macOS extended attributes, and runs `brewlet build` with the agent's `layers` file. Dependencies go in the first layer and the code in the last, so a code change pushes kilobytes. |
 | Publish | `scripts/workloads/publish.sh` | `brewlet push` to the local registry, then `brewlet verify` on the digest. Brewlet runs only digest-pinned applications. |
 | Deploy | `scripts/workloads/deploy.sh` | Applies the agent's own `deployment.yaml`, with its two images pinned to the digests just published, and waits for the rollout. |
 | Verify | `scripts/workloads/smoke.sh` | The checks of the [contract](contract.md), over a port-forward. |

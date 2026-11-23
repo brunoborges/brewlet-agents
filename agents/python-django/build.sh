@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
-# Builds the agent into $APP_DIR. Called by scripts/workloads/build.sh, which then packages
-# $APP_DIR as a Brewlet application artifact (see the "layers" file next to this script).
+# Build the python-django Brewlet artifact using the layers and launch.json in this directory.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$HERE/../.." && pwd)"
-source "$ROOT/scripts/lib/common.sh"
-: "${APP_DIR:?run this through scripts/workloads/build.sh}"
-: "${ARCH:?run this through scripts/workloads/build.sh}"
-: "${INTEGRATIONS_OUT:?run this through scripts/workloads/build.sh}"
+source "$HERE/../../scripts/lib/artifact.sh"
+prepare_artifact "$HERE"
 need uv
 
 # The runtime is Linux on glibc with CPython 3.13 whatever the build host is, so the dependencies are
@@ -61,3 +57,5 @@ compile() {
 }
 compile deps "$SITE"
 compile code "$APP_DIR/code/concierge"
+
+package_artifact "$HERE"

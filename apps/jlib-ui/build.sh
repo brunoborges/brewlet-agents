@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Builds the app into $APP_DIR. Called by scripts/workloads/build.sh, which then packages
-# $APP_DIR as a Brewlet application artifact (see the "layers" file next to this script).
+# Build the jlib-ui Brewlet artifact using the layers and launch.json in this directory.
 #
 # The app is the dashboard of jlib-inspector: the frontend/ directory of that repository, an Express
 # server and a React bundle. None of it is kept here. The build fetches the commit that versions.env
@@ -8,9 +7,8 @@
 # and the five packages app.js requires. Webpack, Babel and React stay behind in the build tree.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$HERE/../../scripts/lib/common.sh"
-: "${APP_DIR:?run this through scripts/workloads/build.sh}"
-: "${ARCH:?run this through scripts/workloads/build.sh}"
+source "$HERE/../../scripts/lib/artifact.sh"
+prepare_artifact "$HERE"
 need git node npm jq
 
 case "$ARCH" in
@@ -90,3 +88,5 @@ cp "$SRC/LICENSE" "$APP_DIR/code/LICENSE"
 # The runtime is Node 24 on glibc. A native addon would have to match both, and none is expected.
 addon="$(find "$APP_DIR" -name '*.node' -print -quit)"
 [ -z "$addon" ] || die "native addon in the artifact: $addon (it must be built for linux/glibc and Node 24)"
+
+package_artifact "$HERE"

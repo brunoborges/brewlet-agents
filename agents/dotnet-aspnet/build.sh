@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-# Builds the agent into $APP_DIR. Called by scripts/workloads/build.sh, which then packages
-# $APP_DIR as a Brewlet application artifact (see the "layers" file next to this script).
+# Build the dotnet-aspnet Brewlet artifact using the layers and launch.json in this directory.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$HERE/../../scripts/lib/common.sh"
-: "${APP_DIR:?run this through scripts/workloads/build.sh}"
-: "${ARCH:?run this through scripts/workloads/build.sh}"
+source "$HERE/../../scripts/lib/artifact.sh"
+prepare_artifact "$HERE"
 need dotnet
 
 # Dependencies are resolved for the target, not for the build host.
@@ -40,3 +38,5 @@ for file in "$STAGE"/*; do
   esac
 done
 rm -rf "$STAGE"
+
+package_artifact "$HERE"

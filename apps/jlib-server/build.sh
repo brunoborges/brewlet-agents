@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-# Builds the app into $APP_DIR. Called by scripts/workloads/build.sh, which then packages
-# $APP_DIR as a Brewlet application artifact (see the "layers" file next to this script).
+# Build the jlib-server Brewlet artifact using the layers and launch.json in this directory.
 #
 # Nothing is compiled: the server is the release jar of jlib-inspector, taken from its GitHub
 # release and checked against the SHA-256 in versions.env before it goes into the artifact.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$HERE/../../scripts/lib/common.sh"
-: "${APP_DIR:?run this through scripts/workloads/build.sh}"
+source "$HERE/../../scripts/lib/artifact.sh"
+prepare_artifact "$HERE"
 need curl openssl
 
 JAR="jlib-inspector-server-${JLIB_INSPECTOR_VERSION}-shaded.jar"
@@ -32,3 +31,5 @@ fi
 mkdir -p "$APP_DIR/app"
 cp "$CACHE/$JAR" "$APP_DIR/app/jlib-inspector-server.jar"
 cp "$HERE/logging.properties" "$APP_DIR/app/"
+
+package_artifact "$HERE"

@@ -8,6 +8,7 @@ SHELL := /usr/bin/env bash
 AGENTS := $(sort $(patsubst agents/%/agent.env,%,$(wildcard agents/*/agent.env)))
 APPS := $(sort $(patsubst apps/%/app.env,%,$(wildcard apps/*/app.env)))
 AGENT ?= $(APP)
+EXAMPLE_DIR := $(strip $(addprefix agents/,$(filter $(AGENTS),$(AGENT))) $(addprefix apps/,$(filter $(APPS),$(AGENT))))
 
 # The documentation site builds with mkdocs when it is installed, and in this image otherwise.
 MKDOCS_IMAGE := squidfunk/mkdocs-material:$(shell sed -n 's/^MKDOCS_MATERIAL_VERSION=//p' versions.env)
@@ -22,7 +23,7 @@ help: ## Show this help
 	@echo; echo "Agents: $(AGENTS)"; echo "Apps:   $(APPS)"
 
 check-agent:
-	@test -n "$(AGENT)" || { echo "set AGENT=<name> (or APP=<name>), one of: $(AGENTS) $(APPS)" >&2; exit 2; }
+	@test "$(words $(AGENT))" = 1 && test -n "$(EXAMPLE_DIR)" || { echo "set AGENT=<name> (or APP=<name>), one of: $(AGENTS) $(APPS)" >&2; exit 2; }
 
 doctor: ## Check the host tools this repository needs
 	@scripts/checks/doctor.sh
@@ -55,10 +56,10 @@ down: ## Delete the cluster and the registry
 
 # --- One agent or app ----------------------------------------------------------------------------
 build: check-agent ## Build the OCI artifact of AGENT (code + dependencies + launch.json)
-	@scripts/workloads/build.sh $(AGENT)
+	@$(MAKE) --no-print-directory -C "$(EXAMPLE_DIR)" build
 
 publish: check-agent ## Push AGENT to the local registry and verify it
-	@scripts/workloads/publish.sh $(AGENT)
+	@$(MAKE) --no-print-directory -C "$(EXAMPLE_DIR)" publish
 
 layers: check-agent ## Show what the published artifact of AGENT is made of: layers and sizes
 	@scripts/workloads/layers.sh $(AGENT)
@@ -67,15 +68,16 @@ footprint: ## Artifact size and memory in use of the deployed agents and apps (o
 	@scripts/workloads/footprint.sh $(AGENT)
 
 deploy: check-agent ## Deploy AGENT: one Pod with the app on a Brewlet runtime, plus the CLI sidecar when it has one
-	@scripts/workloads/deploy.sh $(AGENT)
+	@$(MAKE) --no-print-directory -C "$(EXAMPLE_DIR)" deploy
 
 smoke: check-agent ## Check the deployed AGENT through a port-forward
-	@scripts/workloads/smoke.sh $(AGENT)
+	@$(MAKE) --no-print-directory -C "$(EXAMPLE_DIR)" smoke
 
 undeploy: check-agent ## Remove AGENT from the cluster
 	@scripts/workloads/undeploy.sh $(AGENT)
 
-agent: build publish deploy smoke ## Build, publish, deploy and smoke-test AGENT
+agent: check-agent ## Build, publish, deploy and smoke-test AGENT
+	@$(MAKE) --no-print-directory -C "$(EXAMPLE_DIR)" run
 
 logs: check-agent ## Tail the logs of AGENT (app) and of its Copilot CLI sidecar
 	@scripts/workloads/logs.sh $(AGENT)
@@ -91,7 +93,7 @@ inspect: check-agent ## Show how AGENT's Pod is put together: runtime, artifact,
 
 # --- All agents ----------------------------------------------------------------------------------
 build-all: ## Build and publish every agent and app (no cluster deployment)
-	@for a in $(AGENTS) $(APPS); do scripts/workloads/build.sh $$a && scripts/workloads/publish.sh $$a || exit 1; done
+	@for dir in $(addprefix agents/,$(AGENTS)) $(addprefix apps/,$(APPS)); do $(MAKE) --no-print-directory -C "$$dir" build publish || exit 1; done
 
 agents: ## Build, publish, deploy and smoke-test every agent, one after the other
 	@for a in $(AGENTS); do $(MAKE) --no-print-directory agent AGENT=$$a || exit 1; done

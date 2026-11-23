@@ -76,11 +76,16 @@ to the sidecar through the `CopilotClient` that `AddCopilot` registers.
   linux-arm64|linux-x64 --self-contained false -p:UseAppHost=false` (settings in [`Concierge.csproj`](Concierge.csproj)),
   so only the libraries outside the shared framework ship, split into `deps` and `code` ([`layers`](layers)); any
   unexpected file fails the build.
-* Reproducible: `scripts/workloads/build.sh` pins the mtimes that Brewlet keeps in layer tarballs and the csproj drops the
+* Reproducible: `package_artifact` pins the mtimes that Brewlet keeps in layer tarballs and the csproj drops the
   SDK's git-commit stamp, so unchanged sources give the same digest (`sha256:0ff56e2eb3e8...`, whatever the commit, also
   from an empty NuGet cache) and a code-only change keeps the `deps` digest (`27d94e38c644...`).
 
 ## Run it
+
+After `make up` from the repository root, run `make run` **in this directory** to build, publish,
+deploy and smoke-test this agent. Use `./build.sh` to build just the artifact.
+
+From the repository root:
 
 ```bash
 make agent AGENT=dotnet-aspnet       # build, publish, deploy, smoke test (make auth for the /ask checks)

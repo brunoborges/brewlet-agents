@@ -82,6 +82,11 @@ would record this registry mirror's URLs and `build/` outputs. Two from-scratch 
 
 ## Run it
 
+After `make up` from the repository root, run `make run` **in this directory** to build, publish,
+deploy and smoke-test this agent. Use `./build.sh` to build just the artifact.
+
+From the repository root:
+
 ```bash
 make agent AGENT=node-nestjs     # build, publish, deploy, smoke
 make ask AGENT=node-nestjs Q="Which language runtime are you on and where is it installed?"

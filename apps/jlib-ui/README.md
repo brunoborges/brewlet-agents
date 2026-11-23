@@ -77,6 +77,10 @@ Measured on the kind cluster; the Deployment asks for 25m CPU, 64Mi, limit 192Mi
 
 ## Run it
 
+In this directory, `./build.sh` builds just this app. With the platform and its companion services
+running, `make run` builds, publishes, deploys and smoke-tests it. To run the whole stack, use
+these commands from the repository root:
+
 ```bash
 make observability                   # build, publish, deploy and smoke-test the three pieces of the stack
 make smoke APP=jlib-ui               # the checks again

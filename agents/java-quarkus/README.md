@@ -52,6 +52,11 @@ All dependencies are plain Java, so the jars are the same for `linux/arm64` and 
 
 ## Run it
 
+After `make up` from the repository root, run `make run` **in this directory** to build, publish,
+deploy and smoke-test this agent. Use `./build.sh` to build just the artifact.
+
+From the repository root:
+
 ```bash
 make agent AGENT=java-quarkus
 make ask AGENT=java-quarkus Q="Which language runtime are you on and where is it installed?"

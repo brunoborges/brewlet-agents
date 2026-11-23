@@ -84,6 +84,11 @@ and `lifespan="off"` (Django's ASGI handler does not speak lifespan). `/runtime`
 
 ## Run it
 
+After `make up` from the repository root, run `make run` **in this directory** to build, publish,
+deploy and smoke-test this agent. Use `./build.sh` to build just the artifact.
+
+From the repository root:
+
 ```bash
 make agent AGENT=python-django      # build, publish, deploy, smoke test (make auth for the /ask checks)
 make ask AGENT=python-django Q="Which language runtime are you on and where is it installed?"

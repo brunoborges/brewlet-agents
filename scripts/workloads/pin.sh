@@ -5,7 +5,7 @@
 #   scripts/workloads/pin.sh <app> <artifact-ref> [<sidecar-ref>]     the sidecar only if the app has one
 #
 # The manifest is complete and applied as written. The one thing that changes is the `image:` lines:
-# the file names the tags that scripts/workloads/build.sh and scripts/platform/sidecar-build.sh push, and
+# the file names the tags that make publish and make sidecar push, and
 # Brewlet runs only digest-pinned application images, so the digests go in here. A tag that is not
 # the expected one is an error rather than a silent no-op.
 #

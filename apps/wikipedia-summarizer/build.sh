@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Builds the app into $APP_DIR. Called by scripts/workloads/build.sh, which then packages
-# $APP_DIR as a Brewlet application artifact (see the "layers" file next to this script).
+# Build the wikipedia-summarizer Brewlet artifact using the layers and launch.json in this directory.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$HERE/../.." && pwd)"
-: "${APP_DIR:?run this through scripts/workloads/build.sh}"
+source "$HERE/../../scripts/lib/artifact.sh"
+prepare_artifact "$HERE"
 
 # The unit tests run as part of the build; they need no network and no Copilot CLI.
 "$ROOT/scripts/integrations/mvn.sh" -f "$HERE/pom.xml" clean package
@@ -19,3 +18,5 @@ java -Djarmode=tools -jar "$HERE/target/app.jar" extract --destination "$STAGE"
 mkdir -p "$APP_DIR/deps" "$APP_DIR/code"
 mv "$STAGE/lib" "$APP_DIR/deps/lib"
 mv "$STAGE/app.jar" "$APP_DIR/code/app.jar"
+
+package_artifact "$HERE"

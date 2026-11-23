@@ -66,10 +66,7 @@ ok "$OTEL_DASHBOARD is running in namespace $namespace: $OTEL_DASHBOARD_IMAGE"
 
 # The jlib-inspector server first, then its dashboard, which reports the server's status.
 for app in jlib-server jlib-ui; do
-  "$ROOT/scripts/workloads/build.sh" "$app"
-  "$ROOT/scripts/workloads/publish.sh" "$app"
-  "$ROOT/scripts/workloads/deploy.sh" "$app"
-  "$ROOT/scripts/workloads/app-smoke.sh" "$app"
+  make --no-print-directory -C "$ROOT/apps/$app" run
 done
 
 ok "the observability stack is running in namespace $namespace"

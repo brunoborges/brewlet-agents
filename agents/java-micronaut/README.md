@@ -91,6 +91,11 @@ locations from their jars, the JDK home from `java.home` (`/usr/jdk`).
 
 ## Run it
 
+After `make up` from the repository root, run `make run` **in this directory** to build, publish,
+deploy and smoke-test this agent. Use `./build.sh` to build just the artifact.
+
+From the repository root:
+
 ```bash
 make agent AGENT=java-micronaut      # build, publish, deploy, smoke test (make auth for the /ask check)
 kubectl -n agents port-forward svc/java-micronaut 8080:80 &

@@ -78,6 +78,10 @@ The Service listens on port 80 and forwards to the container's port 8080.
 
 ## Run it
 
+In this directory, `./build.sh` builds just this app. With the platform and its companion services
+running, `make run` builds, publishes, deploys and smoke-tests it. To run the whole stack, use
+these commands from the repository root:
+
 ```bash
 make up && make observability        # the platform, and the telemetry stack the summarizer reports to
 make auth                            # once: the summaries need your GitHub token in the cluster

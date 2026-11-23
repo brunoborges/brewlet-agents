@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Builds the app into $APP_DIR. Called by scripts/workloads/build.sh, which then packages
-# $APP_DIR as a Brewlet application artifact (see the "layers" file next to this script).
+# Build the wikipedia-frontend Brewlet artifact using the layers and launch.json in this directory.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$HERE/../../scripts/lib/common.sh"
-: "${APP_DIR:?run this through scripts/workloads/build.sh}"
+source "$HERE/../../scripts/lib/artifact.sh"
+prepare_artifact "$HERE"
 need node
 
 # The tests are part of the build; they need no network and no summarizer.
@@ -17,3 +16,5 @@ log "  node --test"
 mkdir -p "$APP_DIR/code"
 cp "$HERE/package.json" "$APP_DIR/code/"
 cp -R "$HERE/src" "$HERE/public" "$APP_DIR/code/"
+
+package_artifact "$HERE"

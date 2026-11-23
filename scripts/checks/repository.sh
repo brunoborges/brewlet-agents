@@ -57,6 +57,13 @@ check_layers() {
   done < "$dir/layers"
 }
 
+# Verify the local entry points without building an artifact or touching the cluster.
+check_example_commands() {
+  local dir="$1"
+  [ -x "$dir/build.sh" ] || fail "$dir/build.sh is missing or not executable"
+  make -n -C "$dir" build publish deploy smoke run >/dev/null || fail "$dir: incomplete example Makefile"
+}
+
 # A Pod template that Pod Security "restricted" admits (the namespaces enforce it), with every
 # container read-only, unprivileged and without capabilities.
 hardened_jq='
@@ -150,7 +157,7 @@ for env_file in agents/*/agent.env; do
   check_launch_json "$name" "$dir" "$runtime"
   check_layers "$name" "$dir"
 
-  [ -f "$dir/build.sh" ] || fail "$name: build.sh is missing"
+  check_example_commands "$dir"
   [ -f "$dir/README.md" ] || fail "$name: README.md is missing"
 
   # The system prompt is one file, identical in every agent, loaded as a resource.
@@ -272,7 +279,7 @@ for env_file in apps/*/app.env; do
   check_launch_json "$name" "$dir" "$runtime"
   check_layers "$name" "$dir"
 
-  [ -x "$dir/build.sh" ] || fail "$name: build.sh is missing or not executable"
+  check_example_commands "$dir"
   [ -x "$dir/smoke.sh" ] || fail "$name: smoke.sh is missing or not executable (scripts/workloads/app-smoke.sh runs it)"
   [ -f "$dir/README.md" ] || fail "$name: README.md is missing"
 

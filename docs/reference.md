@@ -79,27 +79,19 @@
 
 ## Scripts
 
-All of them are plain Bash (compatible with the Bash 3.2 that macOS ships) and print what they do.
+Start in `agents/<name>/` or `apps/<name>/`. Run `./build.sh` to package that example, or
+`make run` to build, publish, deploy and smoke-test it against the shared platform. The local
+`Makefile` shows the commands in order; the root `make agent` target runs the same recipe.
 
-| Script | Purpose |
-|--------|---------|
-| `lib.sh` | Shared helpers and the settings from `versions.env`. Sourced, never run. |
-| `smoke-lib.sh` | The HTTP checks that the agent, app and per-app smoke tests share. Sourced. |
-| `install-brewlet.sh` | Downloads the pinned Brewlet CLI into `.bin/`. |
-| `cluster-up.sh`, `cluster-down.sh` | The cluster, registry and Brewlet install, and their removal. |
-| `runtime-register.sh` | Approves the runtimes of `runtimes/*.env` and offers them through a `NodeProfile`. |
-| `runtime-build.sh` | Builds a derived runtime, such as `java-25-jlib`, from an approved one and pushes it to the local registry. |
-| `runtime-rotate.sh` | Moves a runtime to a new image digest and waits for the rotation. |
-| `sidecar-build.sh` | Builds the Copilot CLI sidecar image. |
-| `integrations-build.sh`, `integrations/<language>.sh`, `mvn.sh` | Build the pinned `copilot-sdk-integrations` for a language. |
-| `agent-build.sh`, `agent-publish.sh` | Source to a verified, digest-addressed artifact, for an agent or an app. |
-| `agent-pin.sh`, `agent-deploy.sh`, `agent-undeploy.sh` | The manifest's image pinning and its lifecycle. |
-| `agent-smoke.sh`, `app-smoke.sh`, `agent-ask.sh`, `agent-logs.sh`, `agent-layers.sh`, `agent-inspect.sh`, `footprint.sh` | Talk to a deployed agent or app through a port-forward; show what a published artifact and a deployed Pod are made of; measure what they cost. |
-| `observability.sh` | Deploys the Aspire dashboard, jlib-server and jlib-ui. |
-| `summarize.sh`, `telemetry-check.sh`, `dashboards.sh` | Summarize an article; prove the telemetry arrived; open the dashboards. |
-| `copilot-auth.sh` | Stores or removes the GitHub token. |
-| `demo-rotation.sh` | The rotation demo. |
-| `check.sh`, `doctor.sh` | The static checks and the host check. |
+| Shared scripts | Purpose |
+|----------------|---------|
+| `scripts/platform/` | Cluster setup and teardown, runtime approval and rotation, the sidecar and its credentials. |
+| `scripts/integrations/` | Build the pinned Copilot SDK integrations for each language. |
+| `scripts/workloads/` | Publish and verify an artifact, pin and deploy a manifest, and interact with the deployed workload. |
+| `scripts/observability/` | Deploy the telemetry stack, verify telemetry and open the dashboards. |
+| `scripts/demos/` | Run the rotation and Wikipedia summarizer examples. |
+| `scripts/checks/` | Check the repository and host tools. |
+| `scripts/lib/` | Sourced Bash helpers for artifact packaging, cluster access and HTTP checks. |
 
 ## Runtimes
 

@@ -13,7 +13,7 @@ agent="${1:-}"
 [ -n "$agent" ] || die "usage: $(basename "$0") <agent-or-app>"
 agent_dir "$agent" >/dev/null
 out="$(artifact_out "$agent")"
-[ -f "$out/ref" ] || die "$agent is not built: run scripts/workloads/build.sh $agent"
+[ -f "$out/ref" ] || die "$agent is not built: run ./build.sh in its example directory"
 
 ref="$(cat "$out/ref")"
 arch="$(host_arch)"

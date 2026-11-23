@@ -85,6 +85,17 @@ make deauth && make down        # remove the token, delete the cluster
 
 `make help` lists every target, `make list` lists the agents and the apps.
 
+To work on one example, run `make up` once from the repository root, then:
+
+```bash
+cd agents/java-spring
+make run             # build, publish, deploy and smoke-test this example
+```
+
+Each agent and app has its own `Makefile` and `./build.sh`. Run `./build.sh` for just the
+artifact; run `make publish`, `make deploy`, or `make smoke` to repeat one later step.
+The root targets use these same recipes.
+
 ### The Wikipedia summarizer and the dashboards
 
 The [apps](apps/README.md) run after `make up`. They need the token from `make auth` only to summarize:
@@ -131,7 +142,7 @@ sidecars/          the Copilot CLI sidecar image
 cluster/           the kind cluster configuration; cluster/observability/ holds the Aspire dashboard
 demo/rotation/     builds the "before the patch" runtime for make rotate
 scripts/platform/       set up the cluster, runtimes, sidecar and credentials
-scripts/workloads/      build, publish, deploy, inspect and smoke-test an agent or app
+scripts/workloads/      publish, deploy, inspect and smoke-test an agent or app
 scripts/integrations/   build the language integrations and run Maven against the shared cache
 scripts/observability/  deploy the telemetry stack, open dashboards and verify telemetry
 scripts/demos/          run the runtime rotation and Wikipedia summarizer examples

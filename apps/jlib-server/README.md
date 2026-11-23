@@ -68,6 +68,10 @@ Measured on the kind cluster; the Deployment asks for 50m CPU, 128Mi, limit 256M
 
 ## Run it
 
+In this directory, `./build.sh` builds just this app. With the platform and its companion services
+running, `make run` builds, publishes, deploys and smoke-tests it. To run the whole stack, use
+these commands from the repository root:
+
 ```bash
 make observability                   # deploy Aspire, then build, publish, deploy and smoke-test jlib-server and jlib-ui
 make smoke APP=jlib-server           # the checks again

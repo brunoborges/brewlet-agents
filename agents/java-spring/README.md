@@ -83,11 +83,16 @@ describes the sidecar through the starter's `CopilotClient` bean. The framework 
   which splits Spring Boot's jar into a thin `app.jar` (its manifest has `Class-Path: lib/...`) and `lib/`. The
   libraries become the `deps` layer and the jar the `code` layer ([`layers`](layers)), so a code change ships
   16 KiB instead of 28 MiB.
-* Reproducible: Brewlet keeps file mtimes in the layer tarballs, so `scripts/workloads/build.sh` pins them. Rebuilding
+* Reproducible: Brewlet keeps file mtimes in the layer tarballs, so `package_artifact` pins them. Rebuilding
   unchanged sources gives the same artifact digest (checked twice, digest `sha256:86643a3e65fe...`), and
   `make layers AGENT=java-spring` shows the per-layer digests.
 
 ## Run it
+
+After `make up` from the repository root, run `make run` **in this directory** to build, publish,
+deploy and smoke-test this agent. Use `./build.sh` to build just the artifact.
+
+From the repository root:
 
 ```bash
 make agent AGENT=java-spring         # build, publish, deploy, smoke test (make auth for the /ask checks)

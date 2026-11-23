@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Builds the agent into $APP_DIR. Called by scripts/workloads/build.sh, which then packages
-# $APP_DIR as a Brewlet application artifact (see the "layers" file next to this script).
+# Build the java-quarkus Brewlet artifact using the layers and launch.json in this directory.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$HERE/../.." && pwd)"
-: "${APP_DIR:?run this through scripts/workloads/build.sh}"
+source "$HERE/../../scripts/lib/artifact.sh"
+prepare_artifact "$HERE"
 
 "$ROOT/scripts/integrations/mvn.sh" -f "$HERE/pom.xml" -DskipTests clean package
 
@@ -25,3 +24,5 @@ if [ -n "$foreign" ]; then
   echo "$foreign" >&2
   exit 1
 fi
+
+package_artifact "$HERE"
