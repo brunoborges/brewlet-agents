@@ -10,6 +10,9 @@
 
 Eight [Microsoft Copilot SDK](https://github.com/microsoft/copilot-sdk) agents in Java, Node.js,
 Python and .NET run on a local Kubernetes cluster (`kind`) with [Brewlet](https://github.com/microsoft/brewlet).
+Beside them run four [apps](apps/README.md): a Spring Boot agent that summarizes a Wikipedia article behind a
+REST API, a Node.js front-end for it, and an observability stack with dashboards for the Brewlet runtimes,
+the jars each JVM loads and OpenTelemetry data.
 
 The agents use the Microsoft SDK packages: `com.microsoft:copilot-sdk` (Java),
 `@microsoft/copilot-sdk` (Node.js), `microsoft-copilot-sdk` (Python) and `Microsoft.Copilot.SDK` (.NET).
@@ -68,7 +71,7 @@ You need Docker plus `kind`, `kubectl`, `helm`, `jq`, `curl` and `openssl`; `mak
 and tells you which language toolchains you need for which agents.
 
 ```bash
-make up                         # cluster + Brewlet + the four runtimes + the Copilot CLI sidecar
+make up                         # cluster + Brewlet + the four runtimes + java-25-jlib + the Copilot CLI sidecar
 make agent AGENT=java-spring    # build the artifact, push it, deploy it, smoke-test it
 make whoami AGENT=java-spring   # what the agent says it is running on (works without credentials)
 
@@ -80,7 +83,25 @@ make rotate                     # Ops patches the Java runtime; every Java agent
 make deauth && make down        # remove the token, delete the cluster
 ```
 
-`make help` lists every target, `make list` lists the agents.
+`make help` lists every target, `make list` lists the agents and the apps.
+
+### The Wikipedia summarizer and the dashboards
+
+The [apps](apps/README.md) run after `make up`. They need the token from `make auth` only to summarize:
+
+```bash
+export COPILOT_GITHUB_TOKEN="$(gh auth token --hostname github.com)"
+make auth                       # the sidecar's GitHub token, kept in the copilot-cli Secret
+
+make observability              # Aspire (OpenTelemetry), jlib-server and the jlib-inspector dashboard
+make wikipedia                  # the Spring Boot summarizer and the Node.js front-end
+make summarize URL='https://en.wikipedia.org/wiki/Java_(programming_language)'
+
+make dashboards                 # Brewlet (8088), jlib-inspector (3000), OpenTelemetry (18888), front-end (8080)
+```
+
+`make dashboards` prints the addresses and the sign-in each one needs.
+[Observability and dashboards](docs/observability.md) says what every dashboard shows.
 
 ## Runtime behavior
 
@@ -91,15 +112,23 @@ make deauth && make down        # remove the token, delete the cluster
   never see a GitHub credential.
 * **Runtime rotation.** `make rotate` moves `java-25` from JDK 25.0.4.1 to 25.0.5.1 and back. Spring,
   Quarkus and Micronaut restart on the new JDK while their artifact digests stay identical.
+* **A runtime Ops extends.** `java-25-jlib` is `java-25` plus the
+  [jlib-inspector](https://github.com/brunoborges/jlib-inspector) agent and the OpenTelemetry settings, built
+  from the same pinned JDK. An application opts in with one annotation; its artifact stays the same.
+  The agent reports every environment variable of the process, so such an application takes its secrets
+  from mounted files ([why](docs/security.md#the-observability-stack)).
 
 ## Repository layout
 
 ```text
 agents/<name>/     one agent: agent.env, deployment.yaml, launch.json, layers, build.sh, sources, README.md
 agents/README.md   the contract all agents implement
+apps/<name>/       one app: app.env, deployment.yaml, launch.json, layers, build.sh, smoke.sh, sources, README.md
+apps/README.md     how an app differs from an agent
 runtimes/*.env     the runtime catalog Ops approves (image digest, uid, interpreter)
+runtimes/java-25-jlib/   the Dockerfile of java-25-jlib, the runtime that adds the jlib-inspector agent
 sidecars/          the Copilot CLI sidecar image
-cluster/           the kind cluster configuration
+cluster/           the kind cluster configuration; cluster/observability/ holds the Aspire dashboard
 demo/rotation/     builds the "before the patch" runtime for make rotate
 scripts/           everything the Makefile runs (shell, nothing to install)
 docs/              the documentation site (mkdocs-material)
@@ -108,8 +137,8 @@ versions.env       every pinned version and digest, in one place
 
 ## Documentation
 
-The [documentation](docs/index.md) covers the architecture, each agent and runtime rotation.
-Build it with `make docs` or serve it locally with `make docs-serve`.
+The [documentation](docs/index.md) covers the architecture, each agent and app, the dashboards and runtime
+rotation. Build it with `make docs` or serve it locally with `make docs-serve`.
 
 ## Notes
 

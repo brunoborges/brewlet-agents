@@ -1,7 +1,7 @@
 # Architecture
 
-Three views: what a Pod is made of, how a source tree becomes that Pod, and what happens when Ops
-rotates a runtime.
+Four views: what a Pod is made of, how a source tree becomes that Pod, what happens when Ops
+rotates a runtime, and how the apps and the observability stack fit around the agents.
 
 ## One Pod
 
@@ -70,6 +70,9 @@ flowchart LR
 | Deploy | `scripts/agent-deploy.sh` | Applies the agent's own `deployment.yaml`, with its two images pinned to the digests just published, and waits for the rollout. |
 | Verify | `scripts/agent-smoke.sh` | The checks of the [contract](contract.md), over a port-forward. |
 
+The [apps](apps/index.md) go through the same scripts, from `apps/<name>/`: `build.sh` fills the directory, and
+`scripts/app-smoke.sh` replaces the contract checks. An app has the sidecar only when its `app.env` asks for it.
+
 The artifact is just three kinds of file. The `launch.json` is the whole contract with the runtime:
 
 ```json
@@ -106,18 +109,57 @@ sequenceDiagram
 
 Running containers keep the generation they started with. A rotation reaches them only when they are
 replaced, and replacing them is a decision with two keys: the cluster enables
-`operator.rotationRestarts` (done by `make cluster` for the `agents` namespace only) and each
+`operator.rotationRestarts` (done by `make cluster` for the `agents` and `observability` namespaces only) and each
 Deployment opts in with the `brewlet.sh/restart-on-rotation: "true"` annotation on its own metadata,
-which every `agents/<name>/deployment.yaml` sets. The operator then changes nothing but the barrier annotation, and
+which every `agents/<name>/deployment.yaml` and `apps/<name>/deployment.yaml` sets. The operator then changes nothing but the barrier annotation, and
 the Deployment's rollout strategy does the rest. The [rotation demo](rotation.md) runs this end to end
 and shows the artifact digests staying put.
+
+## The apps and the observability stack
+
+```mermaid
+flowchart LR
+  you["you, through<br/>make dashboards"]
+  subgraph agents["namespace agents"]
+    fe["wikipedia-frontend<br/>node-24"]
+    subgraph sp["Pod: wikipedia-summarizer"]
+      direction LR
+      sm["app: Spring Boot<br/>java-25-jlib"]
+      cli["copilot-cli"]
+      sm -- "loopback" --> cli
+    end
+    fe -- "REST" --> sm
+  end
+  subgraph obs["namespace observability"]
+    js["jlib-server<br/>java-25"]
+    ui["jlib-ui<br/>node-24"]
+    as["aspire-dashboard"]
+    ui -- "polls" --> js
+  end
+  sm -- "jar report" --> js
+  sm -- "OTLP: logs, traces, metrics" --> as
+  sm -- "HTTPS" --> wp["Wikipedia"]
+  cli -- "HTTPS" --> gh["GitHub Copilot"]
+  you -.-> fe
+  you -.-> ui
+  you -.-> as
+  you -.-> bd["Brewlet dashboard<br/>namespace brewlet"]
+```
+
+The summarizer is the one application in the picture that talks to the model, so it is the one with a sidecar. It runs on
+`java-25-jlib`, the runtime that Ops extended with the jlib-inspector agent. The agent is attached by the runtime,
+not by the artifact or the Pod, and it reports to two places that the Pod's environment names. Nothing in the
+`observability` namespace is reachable from outside your machine: `make dashboards` forwards the ports on demand.
+[Observability and dashboards](observability.md) has the details.
 
 ## The platform pieces
 
 | Piece | Lives in | Notes |
 |-------|----------|-------|
 | kind cluster `brewlet-agents`, one node | `cluster/kind-config.yaml` | containerd is configured to find the registry at `localhost:5001`. |
-| Local registry | a Docker container, `brewlet-agents-registry` | Plain HTTP on the Docker network. Holds artifacts, the sidecar and the runtime-rotation demo image. |
-| Brewlet 0.11.0 | Helm chart + node provisioner | Installed by `scripts/cluster-up.sh`; the version is `BREWLET_VERSION` in `versions.env`. |
+| Local registry | a Docker container, `brewlet-agents-registry` | Plain HTTP on the Docker network. Holds artifacts, the sidecar, the `java-25-jlib` runtime and the runtime-rotation demo image. |
+| Brewlet 0.11.0 | Helm chart + node provisioner | Installed by `scripts/cluster-up.sh`; the version is `BREWLET_VERSION` in `versions.env`. The chart's dashboard and metrics Services are enabled. |
 | Runtimes | `runtimes/*.env`, registered by `scripts/runtime-register.sh` | Each pins an image digest, the interpreter path and the user id. |
+| A derived runtime | `runtimes/java-25-jlib/`, built by `scripts/runtime-build.sh` | `java-25` with the jlib-inspector agent. Approved by the digest of the image the build pushed. |
 | Copilot CLI sidecar | `sidecars/copilot-cli` | A distroless image with the checksum-verified CLI release. |
+| Observability stack | `cluster/observability/`, `apps/jlib-server`, `apps/jlib-ui`, deployed by `scripts/observability.sh` | The Aspire OpenTelemetry dashboard, the jlib-inspector server and its dashboard, in the `observability` namespace. |

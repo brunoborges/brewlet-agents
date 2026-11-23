@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Pushes a built agent artifact to the local registry and records the digest deployments pin.
+# Pushes a built agent or app artifact to the local registry and records the digest deployments pin.
 #
-#   scripts/agent-publish.sh <agent>
+#   scripts/agent-publish.sh <agent-or-app>
 #
 # Brewlet only runs digest-pinned application images, so the digest (not the tag) is what matters.
 # The pushed digest equals the built digest: the registry never rewrites a byte.
@@ -10,9 +10,9 @@ source "$(dirname "$0")/lib.sh"
 need docker jq
 
 agent="${1:-}"
-[ -n "$agent" ] || die "usage: $(basename "$0") <agent>"
+[ -n "$agent" ] || die "usage: $(basename "$0") <agent-or-app>"
 agent_dir "$agent" >/dev/null
-out="$BUILD_DIR/agents/$agent"
+out="$(artifact_out "$agent")"
 [ -f "$out/ref" ] || die "$agent is not built: run scripts/agent-build.sh $agent"
 
 ref="$(cat "$out/ref")"

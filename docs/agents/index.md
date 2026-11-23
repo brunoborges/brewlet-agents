@@ -23,6 +23,10 @@ The integrations come from [`brunoborges/copilot-sdk-integrations`](https://gith
 built from a pinned commit (see [Design](../design.md)). Under each of them sits the Copilot SDK for that
 language, which talks to the Copilot CLI sidecar and never bundles it.
 
+Workloads that are not Concierges, such as the [Wikipedia summarizer](../apps/wikipedia-summarizer.md), live in
+`apps/` and are described in [Apps](../apps/index.md). They use the same runtimes, scripts and Pod hardening, and
+none of this contract.
+
 ## What is the same
 
 * **The Pod.** Each agent carries its own complete `deployment.yaml`, and all eight have the same shape:

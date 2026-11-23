@@ -1,0 +1,151 @@
+# The OpenTelemetry dashboard: the complete deployment, readable top to bottom.
+#
+# It is the standalone .NET Aspire Dashboard, which receives OTLP and shows the logs, traces and metrics
+# it is sent. The jlib-inspector agent in the java-25-jlib runtime exports one log event per jar a JVM
+# has loaded (package.info) to the Service below, port 18890 (OTLP over HTTP). Aspire's own telemetry
+# API, on the UI port, returns the same data as JSON, which is how `make telemetry` checks that
+# something arrived.
+#
+# `scripts/observability.sh` applies this file as written, except that it replaces the `image:` line
+# with the digest in versions.env (OTEL_DASHBOARD_IMAGE): Aspire is a vendor image, and the file
+# names its tag. It is an ordinary container, not a Brewlet workload: Brewlet is for applications
+# that run on a platform-owned runtime, and this one ships its own.
+#
+# Reach the dashboard with `make dashboards` (a port-forward). Its login is a token that
+# scripts/observability.sh generates into the Secret below on first use. The OTLP ports have no
+# authentication and take any telemetry from inside the cluster: they are ClusterIP only, and a
+# NetworkPolicy would restrict who may send on a cluster that is not just yours.
+#
+# Not in this file: the namespace and the Secret (scripts/observability.sh creates both).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aspire-dashboard
+  namespace: observability
+# The dashboard never calls the Kubernetes API, so it gets no API token.
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aspire-dashboard
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: aspire-dashboard
+    app.kubernetes.io/part-of: brewlet-agents
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: aspire-dashboard
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: aspire-dashboard
+        app.kubernetes.io/part-of: brewlet-agents
+    spec:
+      serviceAccountName: aspire-dashboard
+      automountServiceAccountToken: false
+      # Service links would inject variables such as ASPIRE_DASHBOARD_PORT=tcp://... into the container.
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        # The image's own user, as a number: Pod Security "restricted" cannot verify a name.
+        runAsUser: 1654
+        runAsGroup: 1654
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: dashboard
+          image: mcr.microsoft.com/dotnet/aspire-dashboard:13.6.5
+          ports:
+            - name: ui
+              containerPort: 18888
+            - name: otlp-grpc
+              containerPort: 18889
+            - name: otlp-http
+              containerPort: 18890
+          env:
+            # The UI asks for a token once and then keeps a session cookie.
+            - name: DASHBOARD__FRONTEND__AUTHMODE
+              value: BrowserToken
+            - name: DASHBOARD__FRONTEND__BROWSERTOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: aspire-dashboard
+                  key: browser-token
+            # Telemetry is accepted from any client in the cluster, as the OTLP exporters here are
+            # not configured with a key. See the note at the top.
+            - name: DASHBOARD__OTLP__AUTHMODE
+              value: Unsecured
+            # The telemetry API: what `make telemetry` reads. It answers only to this key.
+            - name: DASHBOARD__API__ENABLED
+              value: "true"
+            - name: DASHBOARD__API__AUTHMODE
+              value: ApiKey
+            - name: DASHBOARD__API__PRIMARYAPIKEY
+              valueFrom:
+                secretKeyRef:
+                  name: aspire-dashboard
+                  key: api-key
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          # /login answers 200 without a token; / redirects to it.
+          startupProbe:
+            httpGet:
+              path: /login
+              port: ui
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /login
+              port: ui
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: ui
+            periodSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aspire-dashboard
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: aspire-dashboard
+    app.kubernetes.io/part-of: brewlet-agents
+spec:
+  selector:
+    app.kubernetes.io/name: aspire-dashboard
+  ports:
+    - name: ui
+      port: 18888
+      targetPort: ui
+    - name: otlp-grpc
+      port: 18889
+      targetPort: otlp-grpc
+    # What the java-25-jlib runtime's agent exports to (OTEL_EXPORTER_OTLP_ENDPOINT in the
+    # Deployments that use it).
+    - name: otlp-http
+      port: 18890
+      targetPort: otlp-http

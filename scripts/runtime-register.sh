@@ -4,9 +4,10 @@
 #   scripts/runtime-register.sh               every runtimes/*.env
 #   scripts/runtime-register.sh java-25 ...   only those
 #
-# Each runtimes/<id>.env pins one plain base image by digest. Registering writes
-# a cluster-scoped RuntimeImage and offers it through the "local" NodeProfile,
-# which makes the Brewlet operator install it on the node. Safe to re-run.
+# Each runtimes/<id>.env pins one plain base image by digest, or names a BASE runtime to derive from
+# (scripts/runtime-build.sh builds that image and pushes it to the local registry first). Registering
+# writes a cluster-scoped RuntimeImage and offers it through the "local" NodeProfile, which makes the
+# Brewlet operator install it on the node. Safe to re-run.
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 need kubectl brewlet docker
@@ -25,8 +26,8 @@ profile_offers() {
 register() {
   local id="$1" file="$ROOT/runtimes/$1.env"
   [ -f "$file" ] || die "unknown runtime '$id' (no $file)"
-  local image uid gid ecosystem abi mounts description
-  image="$(env_value "$file" IMAGE)"
+  local base uid gid ecosystem abi mounts description
+  base="$(env_value "$file" BASE)"
   uid="$(env_value "$file" RUNTIME_UID)"
   gid="$(env_value "$file" RUNTIME_GID)"
   ecosystem="$(env_value "$file" ECOSYSTEM)"
@@ -37,9 +38,18 @@ register() {
   if kube get runtimeimage "$id" >/dev/null 2>&1; then
     ok "runtime $id is already approved (scripts/runtime-rotate.sh changes its image)"
   else
+    local image
+    if [ -n "$base" ]; then
+      image="$("$ROOT/scripts/runtime-build.sh" "$id")" || die "could not build runtime $id"
+    else
+      image="$(env_value "$file" IMAGE)"
+    fi
     log "approving runtime $id: $description"
     local args=(k8s runtime add "$id" --image "$image" --uid "$uid" --gid "$gid"
                 --platform "linux/$ARCH" --description "$description")
+    case "$image" in
+      localhost:*|127.0.0.1:*) args+=(--insecure) ;;   # the local registry speaks plain HTTP
+    esac
     [ -z "$ecosystem" ] || args+=(--ecosystem "$ecosystem")
     [ -z "$abi" ] || args+=(--abi "$abi")
     local path

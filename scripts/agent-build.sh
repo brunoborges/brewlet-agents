@@ -1,35 +1,43 @@
 #!/usr/bin/env bash
-# Builds one agent into a Brewlet application artifact: its code, its dependencies and its
+# Builds one agent or app into a Brewlet application artifact: its code, its dependencies and its
 # launch.json, and nothing else. The language runtime and the Copilot CLI are not in it.
 #
-#   scripts/agent-build.sh <agent>
+#   scripts/agent-build.sh <agent-or-app>
 #
-# The artifact lands in a local Brewlet store (build/agents/<agent>/store); scripts/agent-publish.sh
-# pushes it. Per-agent inputs live in agents/<agent>/: agent.env, build.sh, launch.json and an
-# optional "layers" file.
+# The artifact lands in a local Brewlet store (build/<agents|apps>/<name>/store); scripts/agent-publish.sh
+# pushes it. Per-workload inputs live in agents/<name>/ or apps/<name>/: agent.env or app.env,
+# build.sh, launch.json and an optional "layers" file.
+#
+# Agents are built against the Copilot SDK integrations of their language. An app does so only when
+# its app.env says INTEGRATIONS=<language>.
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 need docker
 
 agent="${1:-}"
-[ -n "$agent" ] || die "usage: $(basename "$0") <agent>"
+[ -n "$agent" ] || die "usage: $(basename "$0") <agent-or-app>"
 dir="$(agent_dir "$agent")"
-language="$(env_value "$dir/agent.env" LANGUAGE)"
-runtime="$(env_value "$dir/agent.env" RUNTIME)"
-[ -n "$language" ] && [ -n "$runtime" ] || die "$agent: agent.env needs LANGUAGE and RUNTIME"
+envfile="$(workload_env "$dir")"
+language="$(env_value "$envfile" LANGUAGE)"
+runtime="$(env_value "$envfile" RUNTIME)"
+[ -n "$language" ] && [ -n "$runtime" ] || die "$agent: $(basename "$envfile") needs LANGUAGE and RUNTIME"
 [ -f "$dir/launch.json" ] || die "$agent: missing launch.json"
 grep -q "\"$runtime\"" "$dir/launch.json" \
-  || die "$agent: launch.json runtimeImages must list the runtime id \"$runtime\" from agent.env"
+  || die "$agent: launch.json runtimeImages must list the runtime id \"$runtime\" from $(basename "$envfile")"
 [ -x "$ROOT/.bin/brewlet" ] || die "Brewlet CLI missing: run 'make cluster' (scripts/install-brewlet.sh) first"
 
 arch="$(host_arch)"
-"$ROOT/scripts/integrations-build.sh" "$language"
+if [ "$(workload_kind "$agent")" = agents ]; then integrations="$language"; else integrations="$(env_value "$envfile" INTEGRATIONS)"; fi
+if [ -n "$integrations" ]; then
+  "$ROOT/scripts/integrations-build.sh" "$integrations"
+  export INTEGRATIONS_OUT="$BUILD_DIR/integrations/$integrations"
+fi
 
-out="$BUILD_DIR/agents/$agent"
+out="$(artifact_out "$agent")"
 APP_DIR="$out/app"
 rm -rf "$out"
 mkdir -p "$APP_DIR"
-export APP_DIR ARCH="$arch" INTEGRATIONS_OUT="$BUILD_DIR/integrations/$language"
+export APP_DIR ARCH="$arch"
 
 log "building $agent ($language, runtime $runtime, linux/$arch)"
 bash "$dir/build.sh"
@@ -62,8 +70,8 @@ else
 fi
 
 # The tag is cosmetic: deployments pin the digest that scripts/agent-publish.sh records.
-# Each agent has its own store so agents can be built in parallel.
-ref="$REGISTRY_HOST/agents/$agent:dev"
+# Each workload has its own store so they can be built in parallel.
+ref="$REGISTRY_HOST/$(artifact_repo "$agent"):dev"
 store="$out/store"
 mkdir -p "$store"
 

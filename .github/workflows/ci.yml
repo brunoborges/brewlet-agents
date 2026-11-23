@@ -35,32 +35,34 @@ jobs:
       - run: pip install -r docs/requirements.txt
       - run: mkdocs build --strict --site-dir build/site
 
-  agents:
-    name: Find the agents
+  workloads:
+    name: Find the agents and apps
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.find.outputs.matrix }}
     steps:
       - uses: actions/checkout@v7
       - id: find
-        # One job per agents/<name>/agent.env, so a new agent is built without touching this file.
+        # One job per agents/<name>/agent.env and apps/<name>/app.env, so a new agent or app is built
+        # without touching this file. "kind" is the directory the artifact is built under.
         run: |
-          matrix="$(for env in agents/*/agent.env; do
-              jq -cn --arg agent "$(basename "$(dirname "$env")")" \
+          matrix="$(for env in agents/*/agent.env apps/*/app.env; do
+              jq -cn --arg kind "$(basename "$(dirname "$(dirname "$env")")")" \
+                     --arg name "$(basename "$(dirname "$env")")" \
                      --arg language "$(sed -n 's/^LANGUAGE=//p' "$env")" \
-                     '{agent: $agent, language: $language}'
+                     '{kind: $kind, name: $name, language: $language}'
             done | jq -sc .)"
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
           jq . <<<"$matrix"
 
   build:
-    name: Build ${{ matrix.agent }}
-    needs: agents
+    name: Build ${{ matrix.name }}
+    needs: workloads
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.agents.outputs.matrix) }}
+        include: ${{ fromJSON(needs.workloads.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v7
       - if: matrix.language == 'java'
@@ -84,14 +86,15 @@ jobs:
         run: scripts/install-brewlet.sh
       - name: Build the artifact (code, dependencies, launch.json)
         env:
-          AGENT: ${{ matrix.agent }}
-        run: make build AGENT="$AGENT"
+          WORKLOAD: ${{ matrix.name }}
+        run: make build AGENT="$WORKLOAD"
       - name: Show the digest
         env:
-          AGENT: ${{ matrix.agent }}
+          WORKLOAD: ${{ matrix.name }}
+          KIND: ${{ matrix.kind }}
         run: |
           {
-            echo "### $AGENT"
+            echo "### $WORKLOAD"
             echo
-            echo "Artifact digest: \`$(jq -r .digest "build/agents/$AGENT/build-result.json")\`"
+            echo "Artifact digest: \`$(jq -r .digest "build/$KIND/$WORKLOAD/build-result.json")\`"
           } >> "$GITHUB_STEP_SUMMARY"

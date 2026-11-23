@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Removes a deployed agent (Deployment, Service, ServiceAccount) from the cluster.
+# Removes a deployed agent or app (Deployment, Service, ServiceAccount) from the cluster.
 #
-#   scripts/agent-undeploy.sh <agent>
+#   scripts/agent-undeploy.sh <agent-or-app>
 #
 # The shared Secret and the namespace stay; 'make deauth' removes GitHub credentials.
 set -euo pipefail
@@ -9,9 +9,10 @@ source "$(dirname "$0")/lib.sh"
 need kubectl
 
 agent="${1:-}"
-[ -n "$agent" ] || die "usage: $(basename "$0") <agent>"
+[ -n "$agent" ] || die "usage: $(basename "$0") <agent-or-app>"
+namespace="$(workload_namespace "$agent")"
 [ -f "$KUBECONFIG" ] || die "no cluster: run 'make cluster' first"
 
-kube -n "$AGENT_NAMESPACE" delete deployment,service,serviceaccount "$agent" \
+kube -n "$namespace" delete deployment,service,serviceaccount "$agent" \
   --ignore-not-found --wait=true >/dev/null
-ok "$agent removed from namespace $AGENT_NAMESPACE"
+ok "$agent removed from namespace $namespace"

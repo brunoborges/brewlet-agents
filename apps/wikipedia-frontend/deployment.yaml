@@ -1,0 +1,123 @@
+# wikipedia-frontend on Kubernetes: the complete deployment, readable top to bottom.
+#
+# `make deploy APP=wikipedia-frontend` applies this file as written, except that it replaces the
+# `image:` line with the digest that `make publish` pushed (scripts/agent-pin.sh). Brewlet runs only
+# digest-pinned application images, which is why the file names the tag.
+#
+# One container: the application artifact (code + launch.json, nothing else). Brewlet supplies
+# Node.js 24 from the platform-owned runtime named by the annotation below.
+#
+# The front-end holds no credentials. It forwards the article URL to the wikipedia-summarizer Service,
+# the only workload that talks to the Copilot CLI.
+#
+# Not in this file: the namespace (`make deploy` creates it with Pod Security "restricted").
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: wikipedia-frontend
+  namespace: agents
+# The app never calls the Kubernetes API, so it gets no API token.
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wikipedia-frontend
+  namespace: agents
+  labels:
+    app.kubernetes.io/name: wikipedia-frontend
+    app.kubernetes.io/part-of: brewlet-agents
+  annotations:
+    # Ask the Brewlet operator to roll this Deployment when Ops rotates the runtime image.
+    brewlet.sh/restart-on-rotation: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wikipedia-frontend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wikipedia-frontend
+        app.kubernetes.io/part-of: brewlet-agents
+        brewlet-agents.dev/language: node
+      annotations:
+        # The suffix is the container name: this container runs on the platform-owned runtime.
+        runtime-image.brewlet.sh/app: node-24
+    spec:
+      runtimeClassName: brewlet
+      serviceAccountName: wikipedia-frontend
+      automountServiceAccountToken: false
+      # Service links would inject variables such as WIKIPEDIA_SUMMARIZER_PORT=tcp://... into the app.
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 20
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: app
+          image: localhost:5001/apps/wikipedia-frontend:dev
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            # The Service of the summarizer, in this namespace.
+            - name: AGENT_URL
+              value: http://wikipedia-summarizer
+          resources:
+            requests:
+              cpu: 25m
+              memory: 48Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            # Brewlet's admission fills in the runtime's approved uid/gid; this keeps the manifest
+            # compliant with Pod Security "restricted" before that happens.
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: app-tmp
+              mountPath: /tmp
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: app-tmp
+          emptyDir:
+            sizeLimit: 16Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wikipedia-frontend
+  namespace: agents
+  labels:
+    app.kubernetes.io/name: wikipedia-frontend
+    app.kubernetes.io/part-of: brewlet-agents
+spec:
+  selector:
+    app.kubernetes.io/name: wikipedia-frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

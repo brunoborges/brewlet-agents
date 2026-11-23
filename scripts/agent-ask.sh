@@ -12,6 +12,7 @@ need kubectl curl jq
 agent="${1:-}"
 [ -n "$agent" ] || die "usage: $(basename "$0") <agent> [\"<question>\" | --runtime]"
 agent_dir "$agent" >/dev/null
+[ "$(workload_kind "$agent")" = agents ] || die "$agent is an app, not a Runtime Concierge agent: it has no /ask or /runtime endpoint"
 mode="${2:-}"
 [ -f "$KUBECONFIG" ] || die "no cluster: run 'make cluster' first"
 
