@@ -8,17 +8,15 @@
 ![Python 3.13](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
 
-[Microsoft Copilot SDK](https://github.com/microsoft/copilot-sdk) agents in Java, Node.js, Python and
-.NET, deployed to a local Kubernetes cluster (`kind`) with [Brewlet](https://github.com/microsoft/brewlet),
-and documented end to end for demos, blog posts, videos and workshops.
+Eight [Microsoft Copilot SDK](https://github.com/microsoft/copilot-sdk) agents in Java, Node.js,
+Python and .NET run on a local Kubernetes cluster (`kind`) with [Brewlet](https://github.com/microsoft/brewlet).
 
 The agents use the Microsoft SDK packages: `com.microsoft:copilot-sdk` (Java),
 `@microsoft/copilot-sdk` (Node.js), `microsoft-copilot-sdk` (Python) and `Microsoft.Copilot.SDK` (.NET).
 The separate [Copilot CLI](https://github.com/github/copilot-cli) sidecar still comes from
 `github/copilot-cli`; it is not the SDK dependency.
 
-The point of the project is **who owns what**. Brewlet lets the Ops team own the language runtime,
-so an agent's deployable is only its own code:
+Ops manages the language runtime separately from the agent's code and dependencies:
 
 | Piece | Owner | What it is |
 |-------|-------|------------|
@@ -84,7 +82,7 @@ make deauth && make down        # remove the token, delete the cluster
 
 `make help` lists every target, `make list` lists the agents.
 
-## What to show
+## Runtime behavior
 
 * **The split.** `make whoami AGENT=…` for any framework: `agent.location` is under `/app`,
   `language.home` is not. The artifact is about 29 MB of libraries and a few KB of code, with no JDK, no
@@ -110,13 +108,12 @@ versions.env       every pinned version and digest, in one place
 
 ## Documentation
 
-The documentation site covers the design, the architecture, every agent, a 10-minute demo script, a
-90-minute workshop and blog and video outlines. Build it with `make docs` or serve it with
-`make docs-serve`. Start at [`docs/index.md`](docs/index.md).
+The [documentation](docs/index.md) covers the architecture, each agent and runtime rotation.
+Build it with `make docs` or serve it locally with `make docs-serve`.
 
 ## Notes
 
-* This is a laptop demo, not a production reference. Nothing is exposed outside the cluster, and the
+* The cluster runs locally and is not a production reference. Nothing is exposed outside the cluster, and the
   GitHub token is opt-in, lives in one Kubernetes Secret and is removed by `make deauth`.
 * Everything that is pinned (Brewlet, the Copilot CLI and its checksums, runtime and base image
   digests, the integrations commit) is in [`versions.env`](versions.env) and

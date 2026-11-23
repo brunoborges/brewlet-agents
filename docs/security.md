@@ -1,7 +1,7 @@
 # Security model
 
-This is a laptop demo, and it is honest about that. What follows is what the project does enforce,
-what it deliberately does not, and what you would change before running anything like it for real.
+The local cluster isolates credentials at the Pod level. It is not a security boundary for hostile
+tenants.
 
 ## What is enforced
 
