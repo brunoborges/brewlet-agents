@@ -136,10 +136,9 @@ agents/<name>/     one agent: agent.env, deployment.yaml, launch.json, layers, b
 agents/README.md   the contract all agents implement
 agents/wikipedia/  the summarizer, frontend, jlib-server, jlib-ui and their telemetry setup
 runtimes/*.env     the runtime catalog Ops approves (image digest, uid, interpreter)
-sidecars/          the Copilot CLI sidecar image
 cluster/           the kind cluster configuration
 demo/rotation/     builds the "before the patch" runtime for make rotate
-scripts/platform/       set up the cluster, runtimes, sidecar and credentials
+scripts/platform/       set up the cluster, runtimes and credentials
 scripts/workloads/      publish, deploy, inspect and smoke-test an agent or app
 scripts/integrations/   build the language integrations and run Maven against the shared cache
 scripts/demos/          run the runtime rotation example

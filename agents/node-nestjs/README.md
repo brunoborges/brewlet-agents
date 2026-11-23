@@ -96,8 +96,7 @@ make ask AGENT=node-nestjs Q="Which language runtime are you on and where is it 
 The container listens about 0.3 s after it starts; the Pod is Ready about 6 s after it is scheduled (the Copilot
 client connects on the first readiness probe). Measured on the kind node (`crictl stats`, working set): the agent
 holds 52-76 MB idle and 65-84 MB after bursts, and peaked at 80-102 MB with 16 concurrent questions and 83 MB with
-32; the sidecar holds 17 MB before its first question, 33-72 MB after some, and peaked at 166-170 MB (16 concurrent)
-and 220 MB (32). Hence `100m` and `96Mi` requests and a `192Mi` limit (about twice the agent's worst peak).
+32. Hence `100m` and `96Mi` requests and a `192Mi` limit (about twice the agent's worst peak).
 
 ## Gotchas
 

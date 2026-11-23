@@ -74,7 +74,7 @@ build_previous_runtime() {
   arch="$(host_arch)"
   log "building $PREVIOUS_IMAGE: the approved image with the Microsoft Build of OpenJDK $ROTATION_JDK_VERSION over /usr/jdk (downloads about 200 MB)"
   docker build --platform "linux/$arch" --provenance=false --sbom=false \
-    --build-arg "FETCH_IMAGE=$SIDECAR_FETCH_IMAGE" \
+    --build-arg "FETCH_IMAGE=$FETCH_IMAGE" \
     --build-arg "RUNTIME_IMAGE=$APPROVED_IMAGE" \
     --build-arg "JDK_VERSION=$ROTATION_JDK_VERSION" \
     --build-arg "JDK_SHA256_LINUX_ARM64=$ROTATION_JDK_SHA256_LINUX_ARM64" \

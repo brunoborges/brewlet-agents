@@ -14,7 +14,7 @@ EXAMPLE_DIR := $(strip $(addprefix agents/,$(filter $(AGENTS),$(AGENT))) $(addpr
 # The documentation site builds with mkdocs when it is installed, and in this image otherwise.
 MKDOCS_IMAGE := squidfunk/mkdocs-material:$(shell sed -n 's/^MKDOCS_MATERIAL_VERSION=//p' versions.env)
 
-.PHONY: help doctor list up cluster runtimes sidecar down build publish deploy smoke undeploy agent \
+.PHONY: help doctor list up cluster runtimes down build publish deploy smoke undeploy agent \
         agents build-all auth deauth status logs ask whoami inspect layers footprint rotate rotate-status clean docs docs-serve \
         observability wikipedia summarize dashboards telemetry check check-agent
 
@@ -41,16 +41,13 @@ list: ## List the example agents and apps, their language and the runtime they r
 	done
 
 # --- Platform (done once) ------------------------------------------------------------------------
-up: cluster runtimes sidecar ## Bring up the whole platform: cluster, runtimes, Copilot CLI sidecar
+up: cluster runtimes ## Bring up the whole platform: cluster and runtimes
 
 cluster: ## Create the kind cluster, a local registry and install Brewlet
 	@scripts/platform/cluster-up.sh
 
 runtimes: ## Approve the Ops-owned language runtimes (java-25, java-25-jlib, node-24, python-3.13, dotnet-10)
 	@scripts/platform/runtime-register.sh
-
-sidecar: ## Build and push the Copilot CLI sidecar image
-	@scripts/platform/sidecar-build.sh
 
 down: ## Delete the cluster and the registry
 	@scripts/platform/cluster-down.sh

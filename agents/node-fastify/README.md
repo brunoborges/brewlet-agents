@@ -92,8 +92,7 @@ make ask AGENT=node-fastify Q="Which language runtime are you on and where is it
 The container listens 0.15-0.3 s after it starts; the Pod is Ready about 4 s after it is scheduled. Measured on
 the kind node (`crictl stats`, working set): the agent holds 38 MB on a fresh Pod and 44-92 MB after a few
 questions (the working set counts file cache the kernel can reclaim; the RSS stays near 35 MB), and peaked at 74 MB with
-16 concurrent questions and 93 MB with 32. The sidecar holds 17 MB idle, 27-136 MB after a few questions and
-peaked at 183 MB (16 at once) and 291 MB (32 at once). Hence `100m` and `96Mi` requests and a `192Mi` limit.
+16 concurrent questions and 93 MB with 32. Hence `100m` and `96Mi` requests and a `192Mi` limit.
 
 ## Gotchas
 

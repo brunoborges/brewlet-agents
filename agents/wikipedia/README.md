@@ -9,7 +9,7 @@ Both services belong to this example; the other agents don't need them.
 
 ```bash
 # From the repository root:
-make up                  # shared cluster, runtimes and sidecar
+make up                  # shared cluster and runtimes
 make auth                # needed to generate summaries, not to deploy
 cd agents/wikipedia
 make run                 # Aspire + jlib services first, then the summarizer and frontend

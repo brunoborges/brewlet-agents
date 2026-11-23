@@ -24,7 +24,6 @@ Measured on the kind cluster; [`deployment.yaml`](deployment.yaml) asks for 100m
 | working set | fresh Pod | after one ask | 12 asks at once |
 | --- | --- | --- | --- |
 | agent | 92 MiB | 94 MiB | 95 MiB |
-| Copilot CLI sidecar (limit 512Mi) | 16 MiB | 58 MiB | 147 MiB |
 
 The Pod is Ready about 3 s after it is scheduled (the startup probe polls every 2 s); the server itself answers
 `/readyz` 1.3 s after its container starts. `make build` takes about 9 s.

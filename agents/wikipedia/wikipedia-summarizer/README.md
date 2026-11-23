@@ -104,7 +104,6 @@ Measured on the kind cluster; the Deployment asks for 100m CPU, 256Mi, limit 512
 | working set | fresh Pod | after two summaries |
 | --- | --- | --- |
 | agent | 182 MiB | 216 MiB |
-| Copilot CLI sidecar | 17 MiB | 47 MiB |
 
 Startup is 2.0 s (`Started SummarizerApplication in 2.018 seconds`). A summary takes 6 to 10 s, nearly all of
 it the model. `make footprint` prints these numbers for what is deployed.

@@ -61,6 +61,7 @@ Every container, the sidecar included, runs with:
 
 * a non-root user and `runAsNonRoot`;
 * a read-only root file system, with `/tmp` as the only writable path (`emptyDir`, size-limited);
+  the Copilot CLI unpacks itself there (about 275 MB) on every start and runs from it;
 * no Linux capabilities and no privilege escalation;
 * the `RuntimeDefault` seccomp profile.
 
@@ -87,8 +88,8 @@ enforces the same profile.
 |-------|------------------|
 | Runtime images | By digest, in `runtimes/*.env` |
 | `java-25-jlib` runtime | The `java-25` base by digest and the jlib-inspector agent jar by SHA-256, as for the others; its own digest is the one the local build produced, which Brewlet approves as it is |
-| Copilot CLI | By version and by SHA-256 of the release tarball, in `versions.env`; the sidecar build fails on a mismatch |
-| Sidecar base and fetch images | By digest, in `versions.env` |
+| Copilot CLI | GitHub's published image by digest, `COPILOT_CLI_IMAGE`; `gh attestation verify oci://<COPILOT_CLI_IMAGE> --repo github/copilot-cli` checks its build provenance |
+| Fetch image of the derived runtime and the rotation demo | By digest, `FETCH_IMAGE` |
 | `copilot-sdk-integrations` | By commit, `INTEGRATIONS_SHA` |
 | Copilot SDK packages | By version, `COPILOT_SDK_*_VERSION` |
 | jlib-inspector agent and server jars | By release version and by SHA-256 of each jar, in `versions.env`; the build fails on a mismatch |

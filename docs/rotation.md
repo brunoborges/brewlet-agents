@@ -225,7 +225,7 @@ That is the division of labor the design is about, and the reason there are two 
 |----------------------|----------|---------|-----------------------------|
 | The JDK, Node.js, CPython or .NET | Ops (the runtime) | Rotate the `RuntimeImage` | No |
 | A framework or library in the agent | The developer (the artifact) | Rebuild and redeploy the artifact | Yes |
-| The Copilot CLI | Ops (the sidecar) | Publish a new sidecar image (`make sidecar`) and redeploy each agent (`make deploy AGENT=…`) | No rebuild |
+| The Copilot CLI | Ops (the sidecar) | Pin the new release's image (`COPILOT_CLI_VERSION` and `COPILOT_CLI_IMAGE` in `versions.env`, and each `deployment.yaml`) and redeploy each agent (`make deploy AGENT=…`) | No rebuild |
 
 A runtime id is a promise that Ops keeps: across rotations the ecosystem, the ABI, the user and the file
 layout stay the same, and an incompatible change gets a new id so that no agent is moved onto it by

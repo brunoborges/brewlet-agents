@@ -10,10 +10,9 @@
 | Target | What it does |
 |--------|--------------|
 | `make doctor` | Checks the host tools and the cluster. |
-| `make up` | `cluster`, `runtimes` and `sidecar`. |
+| `make up` | `cluster` and `runtimes`. |
 | `make cluster` | Creates the kind cluster, the local registry and installs Brewlet with its dashboard. Safe to rerun. |
 | `make runtimes` | Registers and approves the five runtimes in `runtimes/`, building the derived `java-25-jlib` first. |
-| `make sidecar` | Builds and pushes the Copilot CLI sidecar. |
 | `make down` | Deletes the cluster and the registry. |
 
 ### One agent or app

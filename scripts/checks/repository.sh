@@ -79,8 +79,8 @@ hardened_jq='
 
 # --- versions.env -------------------------------------------------------------------------------
 log "versions.env"
-for v in BREWLET_VERSION CLUSTER_NAME REGISTRY_PORT COPILOT_CLI_VERSION COPILOT_CLI_SHA256_LINUX_ARM64 \
-         COPILOT_CLI_SHA256_LINUX_X64 INTEGRATIONS_SHA SIDECAR_NAME SIDECAR_PORT AGENT_NAMESPACE AGENT_SECRET \
+for v in BREWLET_VERSION CLUSTER_NAME REGISTRY_PORT COPILOT_CLI_VERSION COPILOT_CLI_IMAGE FETCH_IMAGE \
+         INTEGRATIONS_SHA SIDECAR_NAME SIDECAR_PORT AGENT_NAMESPACE AGENT_SECRET \
          OBSERVABILITY_NAMESPACE JLIB_INSPECTOR_VERSION JLIB_INSPECTOR_COMMIT JLIB_INSPECTOR_SHA256_AGENT \
          JLIB_INSPECTOR_SHA256_SERVER OTEL_DASHBOARD OTEL_DASHBOARD_IMAGE; do
   [ -n "${!v:-}" ] || fail "versions.env does not set $v"
@@ -88,10 +88,13 @@ done
 for v in INTEGRATIONS_SHA JLIB_INSPECTOR_COMMIT; do
   [[ "${!v:-}" =~ ^[0-9a-f]{40}$ ]] || fail "$v must be a full 40-character commit"
 done
-for v in COPILOT_CLI_SHA256_LINUX_ARM64 COPILOT_CLI_SHA256_LINUX_X64 JLIB_INSPECTOR_SHA256_AGENT JLIB_INSPECTOR_SHA256_SERVER; do
+for v in JLIB_INSPECTOR_SHA256_AGENT JLIB_INSPECTOR_SHA256_SERVER; do
   [[ "${!v:-}" =~ ^[0-9a-f]{64}$ ]] || fail "$v must be a SHA-256 (64 hex characters)"
 done
 [[ "${OTEL_DASHBOARD_IMAGE:-}" =~ @sha256:[0-9a-f]{64}$ ]] || fail "OTEL_DASHBOARD_IMAGE must be pinned by digest (name@sha256:<64 hex>)"
+[[ "${COPILOT_CLI_IMAGE:-}" == "ghcr.io/github/copilot-cli:${COPILOT_CLI_VERSION:-}@sha256:"* \
+   && "${COPILOT_CLI_IMAGE:-}" =~ @sha256:[0-9a-f]{64}$ ]] \
+  || fail "COPILOT_CLI_IMAGE must be ghcr.io/github/copilot-cli:<COPILOT_CLI_VERSION> pinned by digest (@sha256:<64 hex>)"
 
 # --- the Ops runtime catalog ---------------------------------------------------------------------
 # A runtime names an approved image (IMAGE). A derived runtime (BASE, CONTEXT) has none: it is built
@@ -175,11 +178,10 @@ for env_file in agents/*/agent.env; do
   # still agrees with agent.env and versions.env and describes what Brewlet needs.
   if [ ! -f "$dir/deployment.yaml" ]; then
     fail "$name: deployment.yaml is missing"
-  elif manifest="$(scripts/workloads/pin.sh "$name" "$REGISTRY_HOST/agents/$name@sha256:$zeros" \
-        "$REGISTRY_HOST/$SIDECAR_NAME@sha256:$zeros" 2>&1)"; then
+  elif manifest="$(scripts/workloads/pin.sh "$name" "$REGISTRY_HOST/agents/$name@sha256:$zeros" 2>&1)"; then
     if json="$(yaml_to_json <<<"$manifest" 2>&1)"; then
       jq -e --arg name "$name" --arg ns "$AGENT_NAMESPACE" --arg rt "$runtime" --arg lang "$language" \
-            --arg secret "$AGENT_SECRET" --arg cli_url "127.0.0.1:$SIDECAR_PORT" '
+            --arg secret "$AGENT_SECRET" --arg cli_url "127.0.0.1:$SIDECAR_PORT" --arg cli_image "$COPILOT_CLI_IMAGE" '
           def env_of($c): ($c.env // []) | map({(.name): (.value // .valueFrom)}) | add;
           (map(select(.kind == "Deployment")) | first) as $d
           | ($d.spec.template) as $t
@@ -194,7 +196,8 @@ for env_file in agents/*/agent.env; do
             and ([$t.spec.containers[].name] == ["agent"])
             and ([$t.spec.initContainers[].name] == ["copilot-cli"])
             and ($agent.image | test("@sha256:[0-9a-f]{64}$"))
-            and ($sidecar.image | test("@sha256:[0-9a-f]{64}$"))
+            and $sidecar.image == $cli_image
+            and $sidecar.args == ["--host", "127.0.0.1"]
             and $d.metadata.annotations["brewlet.sh/restart-on-rotation"] == "true"
             and $e.AGENT_NAME == $name
             and $e.AGENT_RUNTIME_ID == $rt
@@ -203,7 +206,7 @@ for env_file in agents/*/agent.env; do
             and $e.COPILOT_CONNECTION_TOKEN.secretKeyRef.name == $secret
             and ([$agent, $sidecar | .resources | .requests.memory and .limits.memory] | all)
         ' <<<"$json" >/dev/null \
-        || fail "$name: deployment.yaml disagrees with agent.env or versions.env (name, namespace, language, runtime, secret, sidecar address, port) or is missing a pinned image, the Brewlet runtime class or memory requests and limits"
+        || fail "$name: deployment.yaml disagrees with agent.env or versions.env (name, namespace, language, runtime, secret, sidecar image and loopback address, port) or is missing a pinned image, the Brewlet runtime class or memory requests and limits"
     elif [ $? -eq 127 ]; then
       warn "$name: no Ruby or PyYAML to parse deployment.yaml; skipped"
     else
@@ -287,12 +290,11 @@ for env_file in agents/wikipedia/*/app.env; do
   # still agrees with app.env and versions.env and describes what Brewlet and the namespace need.
   if [ ! -f "$dir/deployment.yaml" ]; then
     fail "$name: deployment.yaml is missing"
-  elif manifest="$(scripts/workloads/pin.sh "$name" "$REGISTRY_HOST/apps/$name@sha256:$zeros" \
-        ${sidecar:+"$REGISTRY_HOST/$SIDECAR_NAME@sha256:$zeros"} 2>&1)"; then
+  elif manifest="$(scripts/workloads/pin.sh "$name" "$REGISTRY_HOST/apps/$name@sha256:$zeros" 2>&1)"; then
     if json="$(yaml_to_json <<<"$manifest" 2>&1)"; then
       jq -e --arg name "$name" --arg ns "$namespace" --arg rt "$runtime" --arg lang "$language" \
             --arg health "$health" --arg port "$port" --arg sidecar "$sidecar" --arg secret "$AGENT_SECRET" \
-            --arg cli_url "127.0.0.1:$SIDECAR_PORT" --arg jlib_runtime "$jlib_runtime" \
+            --arg cli_url "127.0.0.1:$SIDECAR_PORT" --arg cli_image "$COPILOT_CLI_IMAGE" --arg jlib_runtime "$jlib_runtime" \
             --arg jlib_url "$jlib_url" --arg otlp_url "$otlp_url" "$hardened_jq"'
           def env_of($c): (($c.env // []) | map({(.name): (.value // .valueFrom)}) | add) // {};
           (map(select(.kind == "Deployment")) | first) as $d
@@ -319,7 +321,8 @@ for env_file in agents/wikipedia/*/app.env; do
             and ([$app.ports[] | .name, .containerPort] | index($s.spec.ports[0].targetPort) != null)
             and (if $sidecar == "" then ($t.spec.initContainers // []) == []
                  else ([$t.spec.initContainers[].name] == [$sidecar])
-                   and ($t.spec.initContainers[0].image | test("@sha256:[0-9a-f]{64}$"))
+                   and $t.spec.initContainers[0].image == $cli_image
+                   and $t.spec.initContainers[0].args == ["--host", "127.0.0.1"]
                    and $t.spec.initContainers[0].restartPolicy == "Always"
                    and $e.COPILOT_CLI_URL == $cli_url
                    and env_of($t.spec.initContainers[0]).COPILOT_CONNECTION_TOKEN.secretKeyRef.name == $secret
@@ -335,7 +338,7 @@ for env_file in agents/wikipedia/*/app.env; do
                    and ([$app.envFrom[]? | select(.secretRef != null)] | length) == 0
                  else true end)
         ' <<<"$json" >/dev/null \
-        || fail "$name: deployment.yaml disagrees with app.env or versions.env (name, namespace, language, runtime, health path, Service port, sidecar and its Secret, telemetry endpoints) or lacks a pinned image, the Brewlet runtime class, memory requests and limits, enableServiceLinks: false or the restricted security context; on $jlib_runtime the agent reports the whole environment, so no environment variable may come from a Secret or be named like a credential, and every Secret volume must list the keys it mounts (the GitHub token in $AGENT_SECRET stays with the sidecar)"
+        || fail "$name: deployment.yaml disagrees with app.env or versions.env (name, namespace, language, runtime, health path, Service port, sidecar image, loopback address and Secret, telemetry endpoints) or lacks a pinned image, the Brewlet runtime class, memory requests and limits, enableServiceLinks: false or the restricted security context; on $jlib_runtime the agent reports the whole environment, so no environment variable may come from a Secret or be named like a credential, and every Secret volume must list the keys it mounts (the GitHub token in $AGENT_SECRET stays with the sidecar)"
     elif [ $? -eq 127 ]; then
       warn "$name: no Ruby or PyYAML to parse deployment.yaml; skipped"
     else

@@ -85,9 +85,6 @@ workload_has_sidecar() {
 # Reads KEY from a simple KEY=VALUE file without sourcing arbitrary code.
 env_value() { sed -n "s/^$2=//p" "$1" | head -n1; }
 
-# Image reference of the Copilot CLI sidecar: <registry>/copilot-cli:<cli-version>.
-sidecar_ref() { echo "$REGISTRY_HOST/${SIDECAR_NAME}:${COPILOT_CLI_VERSION}"; }
-
 # Digest (sha256:...) a tag currently resolves to in the local registry.
 registry_digest() {
   local repo="$1" tag="$2"

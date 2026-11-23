@@ -9,8 +9,8 @@
 # nothing derived can be pinned in git: the digest is printed on stdout, recorded in
 # build/runtimes/<id>/image, and scripts/platform/runtime-register.sh approves exactly that.
 #
-# The Dockerfile receives RUNTIME_IMAGE (the base image), FETCH_IMAGE (a pinned image to download
-# files with) and every other ARG it declares from versions.env. The image tag is a hash of those
+# The Dockerfile receives RUNTIME_IMAGE (the base image) and every other ARG it declares from
+# versions.env, such as FETCH_IMAGE (a pinned image to download files with). The image tag is a hash of those
 # inputs and of the Dockerfile, so a second run with the same inputs reuses the image already in the
 # registry instead of producing another digest.
 set -euo pipefail
@@ -35,7 +35,6 @@ for name in $(sed -n 's/^ARG \([A-Za-z_][A-Za-z0-9_]*\).*/\1/p' "$context/Docker
   case "$name" in
     TARGETARCH|TARGETOS|TARGETPLATFORM|TARGETVARIANT) continue ;;
     RUNTIME_IMAGE) value="$base_image" ;;
-    FETCH_IMAGE) value="$SIDECAR_FETCH_IMAGE" ;;
     *) value="$(printenv "$name")" || die "$context/Dockerfile declares ARG $name, which versions.env does not define" ;;
   esac
   args+=(--build-arg "$name=$value")

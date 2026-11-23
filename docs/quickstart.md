@@ -24,13 +24,12 @@ the integrations is used when you do not have Maven.
 make up
 ```
 
-`make up` is three steps, each of which you can run on its own:
+`make up` is two steps, each of which you can run on its own:
 
 | Step | What happens |
 |------|--------------|
 | `make cluster` | Creates the kind cluster `brewlet-agents` and a local registry on `localhost:5001`, installs Brewlet (the Helm chart and the node provisioner) and the `agents` namespace, and enables [rotation restarts](rotation.md) for it. |
 | `make runtimes` | Registers and approves the Ops-owned runtimes from [`runtimes/`](https://github.com/brunoborges/brewlet-agents/tree/main/runtimes): `java-25`, `node-24`, `python-3.13`, `dotnet-10`, and `java-25-jlib`, which is `java-25` with the [jlib-inspector](observability.md#the-java-25-jlib-runtime) agent that this step builds and pushes to the local registry first. Each is pinned by digest. |
-| `make sidecar` | Builds the Copilot CLI sidecar image (checksum-verified download of the pinned CLI release onto a distroless base) and pushes it to the local registry. |
 
 The first run downloads several images and installs the first runtime, which is the slow part and
 depends on your network. The cluster reports `lstat /run/brewlet: no such file or directory` while

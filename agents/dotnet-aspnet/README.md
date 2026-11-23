@@ -30,7 +30,6 @@ Measured on the kind cluster; [`deployment.yaml`](deployment.yaml) asks for 100m
 | working set | fresh Pod | after two asks | 32 asks, 8 at a time |
 | --- | --- | --- | --- |
 | agent | 55 MiB | 95 MiB | 99 MiB (peak 100) |
-| Copilot CLI sidecar | 17 MiB | 46 MiB | peak 144 MiB, then 56 MiB |
 
 Kestrel listens within 1 s of the container starting and the Pod is Ready after 3 s. `make agent` from scratch takes
 15 to 19 s with a warm NuGet cache, smoke test included; `make footprint` prints the memory numbers.

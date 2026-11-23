@@ -40,7 +40,8 @@ Its summarizer, frontend and observability services live together under `agents/
 * The **runtime** is a plain, framework-agnostic language image (`java-25`, `node-24`,
   `python-3.13`, `dotnet-10`) approved, patched and rotated by Ops. No runtime contains a framework
   or the Copilot SDK, so the same runtime serves every framework of that language.
-* The **Copilot CLI** is a separate sidecar container (`sidecars/copilot-cli`). The SDK reaches it
+* The **Copilot CLI** is a separate sidecar container: the image GitHub publishes,
+  `ghcr.io/github/copilot-cli`, pinned by digest (`COPILOT_CLI_IMAGE` in `versions.env`). The SDK reaches it
   over the Pod's loopback interface, authenticating with a shared connection token. It is the only
   container that ever holds GitHub credentials.
 
@@ -152,9 +153,10 @@ agents/<name>/
   `deployment.yaml`.
 * `deployment.yaml` is complete and is applied as written, so reading it shows exactly what runs: the
   Pod's two containers, resources, security settings and probes. The only thing `make deploy`
-  changes is the two `image:` lines, which name tags in the file and get the digests that
-  `make publish` and `make sidecar` pushed (`scripts/workloads/pin.sh`). `make check` fails if the file
-  drifts from `agent.env` or `versions.env` (name, namespace, runtime, sidecar version).
+  changes is the agent's `image:` line, which names a tag in the file and gets the digest that
+  `make publish` pushed (`scripts/workloads/pin.sh`); the sidecar's already names `COPILOT_CLI_IMAGE`.
+  `make check` fails if the file drifts from `agent.env` or `versions.env` (name, namespace, runtime,
+  sidecar image).
 * Run `./build.sh` without arguments or environment setup. Its `prepare_artifact` call sets
   `APP_DIR` (staging directory), `ARCH` (`arm64` or `amd64`) and `INTEGRATIONS_OUT` (the pinned
   integrations for this language). Dependencies must be resolved for **linux/`$ARCH` and the

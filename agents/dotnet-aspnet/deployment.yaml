@@ -1,8 +1,8 @@
 # dotnet-aspnet on Kubernetes: the complete deployment, readable top to bottom.
 #
-# `make deploy AGENT=dotnet-aspnet` applies this file as written, except that it replaces the two
-# `image:` lines with the digests that `make publish` and `make sidecar` pushed (scripts/workloads/pin.sh).
-# Brewlet runs only digest-pinned application images, which is why the file names the tags.
+# `make deploy AGENT=dotnet-aspnet` applies this file as written, except that it replaces the agent's
+# `image:` line with the digest that `make publish` pushed (scripts/workloads/pin.sh). Brewlet runs
+# only digest-pinned application images, which is why the file names the tag.
 #
 # One Pod, two containers, two owners:
 #   agent        the application artifact: code + dependencies + launch.json, nothing else.
@@ -57,8 +57,12 @@ spec:
       initContainers:
         # A native sidecar: starts before the agent and lives as long as the Pod.
         - name: copilot-cli
-          image: localhost:5001/copilot-cli:1.0.114
+          # GitHub's image of the CLI release, pinned by digest (COPILOT_CLI_IMAGE in versions.env).
+          image: ghcr.io/github/copilot-cli:1.0.114@sha256:5083f9892836b4d1cc975386b0fbe9ded2658f22ae43f81c0a36fe917f85b1a9
           restartPolicy: Always
+          # Appended to the image's server command, which listens on every interface. That would
+          # include the Pod IP; this keeps the CLI on the loopback interface the agent shares.
+          args: ["--host", "127.0.0.1"]
           env:
             # The SDK must present this token; the CLI refuses connections without it.
             - name: COPILOT_CONNECTION_TOKEN
@@ -73,16 +77,20 @@ spec:
                   name: copilot-cli
                   key: github-token
                   optional: true
+            # The root filesystem is read-only: the CLI unpacks itself and keeps its state in /tmp.
+            - name: HOME
+              value: /tmp
+          # About 150 MiB before the first request, and it grows with concurrent conversations.
           resources:
             requests:
               cpu: 50m
-              memory: 128Mi
+              memory: 192Mi
             limits:
               memory: 512Mi
           securityContext:
             runAsNonRoot: true
-            runAsUser: 65532
-            runAsGroup: 65532
+            runAsUser: 10001
+            runAsGroup: 10001
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             capabilities:
@@ -164,9 +172,10 @@ spec:
         - name: agent-tmp
           emptyDir:
             sizeLimit: 64Mi
+        # The CLI unpacks about 275 MB of itself here on every start.
         - name: cli-tmp
           emptyDir:
-            sizeLimit: 128Mi
+            sizeLimit: 512Mi
 ---
 apiVersion: v1
 kind: Service

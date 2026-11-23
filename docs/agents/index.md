@@ -66,16 +66,19 @@ are measured the same way for every language.
 This snapshot is from `make footprint` after one `make ask` for each agent. Artifact size is compressed;
 container memory is the current working set and varies with requests and runtime activity.
 
-| Agent | Artifact MiB | Agent MiB | Sidecar MiB |
-|-------|-------------:|----------:|------------:|
-| java-spring | 27.7 | 180 | 44 |
-| java-quarkus | 23.8 | 143 | 43 |
-| java-micronaut | 22.8 | 150 | 47 |
-| node-nestjs | 4.7 | 59 | 36 |
-| node-fastify | 4.2 | 52 | 37 |
-| python-django | 13.5 | 97 | 36 |
-| python-fastapi | 9.5 | 96 | 38 |
-| dotnet-aspnet | 6.0 | 122 | 42 |
+| Agent | Artifact MiB | Agent MiB |
+|-------|-------------:|----------:|
+| java-spring | 27.7 | 180 |
+| java-quarkus | 23.8 | 143 |
+| java-micronaut | 22.8 | 150 |
+| node-nestjs | 4.7 | 59 |
+| node-fastify | 4.2 | 52 |
+| python-django | 13.5 | 97 |
+| python-fastapi | 9.5 | 96 |
+| dotnet-aspnet | 6.0 | 122 |
+
+Every Pod also runs the Copilot CLI sidecar, the same image in each. Measured the same way, it holds about
+150 MiB before its first request and grows with the number of concurrent conversations.
 
 ## Add a ninth
 

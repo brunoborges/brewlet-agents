@@ -28,7 +28,6 @@ Measured on the kind cluster; [`deployment.yaml`](deployment.yaml) asks for 100m
 | working set | fresh Pod | after two asks |
 | --- | --- | --- |
 | agent | 169 MiB | 183 MiB |
-| Copilot CLI sidecar | 16 MiB | 52 MiB |
 
 Startup is 1.1-1.2 s (`Started ConciergeApplication in 1.096 seconds`). `make agent` from scratch takes about
 22 s with a warm Maven cache. `make footprint` prints these numbers for whatever is deployed.

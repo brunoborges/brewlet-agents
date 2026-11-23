@@ -26,7 +26,6 @@ Measured on the kind cluster; [`deployment.yaml`](deployment.yaml) asks for 100m
 | working set | idle | after asks | 4 concurrent asks |
 | --- | --- | --- | --- |
 | agent | 120 MiB | 145 MiB | 146 MiB |
-| Copilot CLI sidecar | 17 MiB | 30-60 MiB | 88 MiB |
 
 Startup is 0.5-0.9 s (`Startup completed in 533ms`). `make agent` from scratch takes about 25 s with a warm
 Maven cache (about 11 s of Maven when cold).

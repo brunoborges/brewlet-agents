@@ -65,7 +65,7 @@ kubectl -n agents port-forward deploy/java-quarkus 18101:8080 &
 curl -s localhost:18101/ask -H 'content-type: application/json' -d '{"question":"Which JDK are you on?","conversationId":"demo"}'
 ```
 
-Measured on the local kind cluster (arm64): startup 0.6 s (`started in 0.622s`). Agent working set: 98 MB idle, 134 MB after the first answer, 141 MB after 20 parallel conversations (cgroup peak 186 MiB, of which about 50 MiB is reclaimable page cache). Copilot CLI sidecar: 17 MB idle, 39 MB after the first answer, about 190 MB with 20 conversations (roughly 7 MB each). Resources in [`deployment.yaml`](deployment.yaml): request 100m CPU and 160Mi, limit 320Mi (the heap may use 70% of it); the burst caused no OOM kill and no restart.
+Measured on the local kind cluster (arm64): startup 0.6 s (`started in 0.622s`). Agent working set: 98 MB idle, 134 MB after the first answer, 141 MB after 20 parallel conversations (cgroup peak 186 MiB, of which about 50 MiB is reclaimable page cache). Resources in [`deployment.yaml`](deployment.yaml): request 100m CPU and 160Mi, limit 320Mi (the heap may use 70% of it); the burst caused no OOM kill and no restart.
 
 ## Gotchas
 

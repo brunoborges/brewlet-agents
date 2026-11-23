@@ -23,7 +23,8 @@ flowchart TB
     end
     brewlet -. "provides and verifies the runtime" .-> agent
   end
-  reg[("registry<br/>localhost:5001")] -. "artifact, sidecar image, runtime image" .-> node
+  reg[("registry<br/>localhost:5001")] -. "artifact, runtime image" .-> node
+  ghcr[("ghcr.io")] -. "Copilot CLI image" .-> node
   cli -- "HTTPS, GitHub credentials" --> gh["GitHub Copilot"]
 ```
 
@@ -157,9 +158,9 @@ not by the artifact or the Pod, and it reports to two places that the Pod's envi
 | Piece | Lives in | Notes |
 |-------|----------|-------|
 | kind cluster `brewlet-agents`, one node | `cluster/kind-config.yaml` | containerd is configured to find the registry at `localhost:5001`. |
-| Local registry | a Docker container, `brewlet-agents-registry` | Plain HTTP on the Docker network. Holds artifacts, the sidecar, the `java-25-jlib` runtime and the runtime-rotation demo image. |
+| Local registry | a Docker container, `brewlet-agents-registry` | Plain HTTP on the Docker network. Holds artifacts, the `java-25-jlib` runtime and the runtime-rotation demo image. |
 | Brewlet 0.11.0 | Helm chart + node provisioner | Installed by `scripts/platform/cluster-up.sh`; the version is `BREWLET_VERSION` in `versions.env`. The chart's dashboard and metrics Services are enabled. |
 | Runtimes | `runtimes/*.env`, registered by `scripts/platform/runtime-register.sh` | Each pins an image digest, the interpreter path and the user id. |
 | A derived runtime | `agents/wikipedia/java-25-jlib/`, built by `scripts/platform/runtime-build.sh` | `java-25` with the jlib-inspector agent. Approved by the digest of the image the build pushed. |
-| Copilot CLI sidecar | `sidecars/copilot-cli` | A distroless image with the checksum-verified CLI release. |
+| Copilot CLI sidecar | `ghcr.io/github/copilot-cli`, `COPILOT_CLI_IMAGE` in `versions.env` | The image GitHub publishes with each CLI release, pinned by digest. The node pulls it from ghcr.io. |
 | Observability stack | `agents/wikipedia/observability/`, `agents/wikipedia/jlib-server`, `agents/wikipedia/jlib-ui`, deployed by `agents/wikipedia/observability/deploy.sh` | The Aspire OpenTelemetry dashboard, the jlib-inspector server and its dashboard, in the `observability` namespace. |
