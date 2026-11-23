@@ -46,7 +46,7 @@ The first two have no defaults on purpose: the Pod must provide both or the proc
 
 ## Build notes
 
-`build.sh` runs `scripts/mvn.sh -f pom.xml clean package` (Quarkus fast-jar, `--release 25` like the runtime's JDK) and stages `target/quarkus-app/lib` as the `deps` layer and everything else as the `code` layer (`layers`: `deps:/app/lib`, then `code:/app`). `quarkus-run.jar` finds its libraries through a manifest `Class-Path` relative to itself, so nothing needs repackaging, and a code-only change rebuilds a 558 KiB layer.
+`build.sh` runs `scripts/integrations/mvn.sh -f pom.xml clean package` (Quarkus fast-jar, `--release 25` like the runtime's JDK) and stages `target/quarkus-app/lib` as the `deps` layer and everything else as the `code` layer (`layers`: `deps:/app/lib`, then `code:/app`). `quarkus-run.jar` finds its libraries through a manifest `Class-Path` relative to itself, so nothing needs repackaging, and a code-only change rebuilds a 558 KiB layer.
 
 All dependencies are plain Java, so the jars are the same for `linux/arm64` and `linux/amd64`; brotli4j was the one exception (see Gotchas) and `build.sh` fails if a jar for the build host's OS ever reaches the artifact. The platform BOM, 3.40.1, is the Quarkus release the extension is built and tested against. The SDK's `CopilotToolProcessor` generates the `@CopilotTool` metadata and is named in `maven-compiler-plugin`, as the extension's README asks. A from-scratch `make agent` takes about 27 s end to end (Maven 7 s; the rest is publish, rollout and the smoke test). The build is reproducible: the same sources give the same bytes, so a rebuild yields the same artifact digest and a code-only change pushes only the 558 KiB `code` layer.
 

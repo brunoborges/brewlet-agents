@@ -15,7 +15,7 @@
 # server; an application opts into either by setting the variable in its Pod. Without one the agent
 # only prints its report when the JVM exits. The report repeats every 30 seconds.
 #
-# Built by scripts/runtime-build.sh; every value comes from versions.env and runtimes/java-25.env.
+# Built by scripts/platform/runtime-build.sh; every value comes from versions.env and runtimes/java-25.env.
 # The base images are build arguments without defaults on purpose: those files are the only place
 # they are pinned.
 ARG FETCH_IMAGE

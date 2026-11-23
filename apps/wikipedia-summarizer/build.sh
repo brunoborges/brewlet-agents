@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Builds the app into $APP_DIR. Called by scripts/agent-build.sh, which then packages
+# Builds the app into $APP_DIR. Called by scripts/workloads/build.sh, which then packages
 # $APP_DIR as a Brewlet application artifact (see the "layers" file next to this script).
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
-: "${APP_DIR:?run this through scripts/agent-build.sh}"
+: "${APP_DIR:?run this through scripts/workloads/build.sh}"
 
 # The unit tests run as part of the build; they need no network and no Copilot CLI.
-"$ROOT/scripts/mvn.sh" -f "$HERE/pom.xml" clean package
+"$ROOT/scripts/integrations/mvn.sh" -f "$HERE/pom.xml" clean package
 
 # Spring Boot's "tools" mode splits the fat jar into a thin app.jar plus lib/*.jar. The
 # thin jar finds its libraries through its manifest Class-Path, so Brewlet can ship the

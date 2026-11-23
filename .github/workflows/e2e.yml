@@ -99,7 +99,7 @@ jobs:
         if: env.RUN_APPS == 'true'
         run: |
           make telemetry
-          scripts/dashboards.sh --check
+          scripts/observability/dashboards.sh --check
 
       - name: Rotate the java-25 runtime and watch the Java agents follow
         if: inputs.rotation

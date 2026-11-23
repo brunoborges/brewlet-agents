@@ -25,7 +25,7 @@ check-agent:
 	@test -n "$(AGENT)" || { echo "set AGENT=<name> (or APP=<name>), one of: $(AGENTS) $(APPS)" >&2; exit 2; }
 
 doctor: ## Check the host tools this repository needs
-	@scripts/doctor.sh
+	@scripts/checks/doctor.sh
 
 list: ## List the example agents and apps, their language and the runtime they run on
 	@printf '%-22s %-6s %-8s %-18s %s\n' NAME KIND LANGUAGE FRAMEWORK RUNTIME
@@ -42,82 +42,82 @@ list: ## List the example agents and apps, their language and the runtime they r
 up: cluster runtimes sidecar ## Bring up the whole platform: cluster, runtimes, Copilot CLI sidecar
 
 cluster: ## Create the kind cluster, a local registry and install Brewlet
-	@scripts/cluster-up.sh
+	@scripts/platform/cluster-up.sh
 
 runtimes: ## Approve the Ops-owned language runtimes (java-25, java-25-jlib, node-24, python-3.13, dotnet-10)
-	@scripts/runtime-register.sh
+	@scripts/platform/runtime-register.sh
 
 sidecar: ## Build and push the Copilot CLI sidecar image
-	@scripts/sidecar-build.sh
+	@scripts/platform/sidecar-build.sh
 
 down: ## Delete the cluster and the registry
-	@scripts/cluster-down.sh
+	@scripts/platform/cluster-down.sh
 
 # --- One agent or app ----------------------------------------------------------------------------
 build: check-agent ## Build the OCI artifact of AGENT (code + dependencies + launch.json)
-	@scripts/agent-build.sh $(AGENT)
+	@scripts/workloads/build.sh $(AGENT)
 
 publish: check-agent ## Push AGENT to the local registry and verify it
-	@scripts/agent-publish.sh $(AGENT)
+	@scripts/workloads/publish.sh $(AGENT)
 
 layers: check-agent ## Show what the published artifact of AGENT is made of: layers and sizes
-	@scripts/agent-layers.sh $(AGENT)
+	@scripts/workloads/layers.sh $(AGENT)
 
 footprint: ## Artifact size and memory in use of the deployed agents and apps (or of AGENT=<name>)
-	@scripts/footprint.sh $(AGENT)
+	@scripts/workloads/footprint.sh $(AGENT)
 
 deploy: check-agent ## Deploy AGENT: one Pod with the app on a Brewlet runtime, plus the CLI sidecar when it has one
-	@scripts/agent-deploy.sh $(AGENT)
+	@scripts/workloads/deploy.sh $(AGENT)
 
 smoke: check-agent ## Check the deployed AGENT through a port-forward
-	@scripts/agent-smoke.sh $(AGENT)
+	@scripts/workloads/smoke.sh $(AGENT)
 
 undeploy: check-agent ## Remove AGENT from the cluster
-	@scripts/agent-undeploy.sh $(AGENT)
+	@scripts/workloads/undeploy.sh $(AGENT)
 
 agent: build publish deploy smoke ## Build, publish, deploy and smoke-test AGENT
 
 logs: check-agent ## Tail the logs of AGENT (app) and of its Copilot CLI sidecar
-	@scripts/agent-logs.sh $(AGENT)
+	@scripts/workloads/logs.sh $(AGENT)
 
 ask: check-agent ## Ask AGENT a question: make ask AGENT=java-spring Q="Which JDK are you on?" (needs make auth)
-	@scripts/agent-ask.sh $(AGENT) "$$Q"
+	@scripts/workloads/ask.sh $(AGENT) "$$Q"
 
 whoami: check-agent ## Print what AGENT reports about the runtime it is running on (its /runtime document)
-	@scripts/agent-ask.sh $(AGENT) --runtime
+	@scripts/workloads/ask.sh $(AGENT) --runtime
 
 inspect: check-agent ## Show how AGENT's Pod is put together: runtime, artifact, sidecar, and who gets the token
-	@scripts/agent-inspect.sh $(AGENT)
+	@scripts/workloads/inspect.sh $(AGENT)
 
 # --- All agents ----------------------------------------------------------------------------------
 build-all: ## Build and publish every agent and app (no cluster deployment)
-	@for a in $(AGENTS) $(APPS); do scripts/agent-build.sh $$a && scripts/agent-publish.sh $$a || exit 1; done
+	@for a in $(AGENTS) $(APPS); do scripts/workloads/build.sh $$a && scripts/workloads/publish.sh $$a || exit 1; done
 
 agents: ## Build, publish, deploy and smoke-test every agent, one after the other
 	@for a in $(AGENTS); do $(MAKE) --no-print-directory agent AGENT=$$a || exit 1; done
 
 # --- The Wikipedia summarizer and the telemetry dashboards ---------------------------------------
 observability: ## Deploy the telemetry stack: the Aspire OpenTelemetry dashboard and the jlib-inspector server and UI
-	@scripts/observability.sh
+	@scripts/observability/deploy.sh
 
 wikipedia: ## Deploy the Wikipedia summarizer (REST API) and its Node.js front-end (needs make up, make observability)
 	@for a in wikipedia-summarizer wikipedia-frontend; do $(MAKE) --no-print-directory agent AGENT=$$a || exit 1; done
 
 summarize: ## Summarize an article: make summarize URL=https://en.wikipedia.org/wiki/Java_(programming_language) [VIA=frontend]
-	@scripts/summarize.sh $(if $(filter frontend,$(VIA)),--frontend) "$$URL"
+	@scripts/demos/summarize.sh $(if $(filter frontend,$(VIA)),--frontend) "$$URL"
 
 telemetry: ## Check that the Java agent's report, and the apps' logs, traces and metrics, reached jlib-inspector and Aspire
-	@scripts/telemetry-check.sh
+	@scripts/observability/telemetry-check.sh
 
 dashboards: ## Open the dashboards through port-forwards (all, or DASHBOARDS="brewlet jlib otel frontend") until Ctrl-C
-	@scripts/dashboards.sh $$DASHBOARDS
+	@scripts/observability/dashboards.sh $$DASHBOARDS
 
 # --- Credentials and day-2 -----------------------------------------------------------------------
 auth: ## Opt in: give the Copilot CLI sidecar your GitHub token (gh auth token, or COPILOT_GITHUB_TOKEN)
-	@scripts/copilot-auth.sh
+	@scripts/platform/copilot-auth.sh
 
 deauth: ## Remove the GitHub token from the cluster again
-	@scripts/copilot-auth.sh --remove
+	@scripts/platform/copilot-auth.sh --remove
 
 status: ## Show the Pods of the agents and apps, and the Brewlet runtimes
 	@KUBECONFIG=build/kubeconfig kubectl -n agents get pods -o wide
@@ -125,14 +125,14 @@ status: ## Show the Pods of the agents and apps, and the Brewlet runtimes
 	@KUBECONFIG=build/kubeconfig kubectl get runtimeimages
 
 rotate: ## Demo: Ops rotates the java-25 runtime and every Java agent follows; no agent is rebuilt
-	@scripts/demo-rotation.sh all
+	@scripts/demos/rotation.sh all
 
 rotate-status: ## Show the JDK each Java agent runs on, next to its (unchanged) artifact digest
-	@scripts/demo-rotation.sh status
+	@scripts/demos/rotation.sh status
 
 # --- Housekeeping --------------------------------------------------------------------------------
 check: ## Static checks: the agent contract, launch.json, scripts and manifests (no cluster needed)
-	@scripts/check.sh
+	@scripts/checks/repository.sh
 
 clean: ## Remove build output (keeps the cluster, the download caches and the approved runtime images)
 	rm -rf build/agents build/apps build/integrations

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Builds the app into $APP_DIR. Called by scripts/agent-build.sh, which then packages
+# Builds the app into $APP_DIR. Called by scripts/workloads/build.sh, which then packages
 # $APP_DIR as a Brewlet application artifact (see the "layers" file next to this script).
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$HERE/../../scripts/lib.sh"
-: "${APP_DIR:?run this through scripts/agent-build.sh}"
+source "$HERE/../../scripts/lib/common.sh"
+: "${APP_DIR:?run this through scripts/workloads/build.sh}"
 need node
 
 # The tests are part of the build; they need no network and no summarizer.

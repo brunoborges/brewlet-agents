@@ -171,8 +171,8 @@ for the jars it loads. All three arrive on one resource, `wikipedia-summarizer`,
 
 ## Build notes
 
-* Host tools: Maven 3.9+ and JDK 25, the same as for the Java agents. `scripts/mvn.sh` points Maven at the shared
-  `build/m2`, where `scripts/integrations-build.sh java` installed the starter.
+* Host tools: Maven 3.9+ and JDK 25, the same as for the Java agents. `scripts/integrations/mvn.sh` points Maven at the shared
+  `build/m2`, where `scripts/integrations/build.sh java` installed the starter.
 * [`build.sh`](build.sh) runs `mvn clean package`, which includes the 52 unit tests (no network, no Copilot CLI),
   then splits Spring Boot's jar with `java -Djarmode=tools -jar target/app.jar extract` into the thin `app.jar` and
   `lib/`, as the `deps` and `code` layers ([`layers`](layers)). A code change ships 31 KiB instead of 36 MiB.

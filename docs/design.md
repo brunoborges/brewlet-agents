@@ -71,7 +71,7 @@ sidecar keeps the trust boundary at the Pod, which is the unit Kubernetes alread
   to stay compatible. `/runtime` reports the CLI's version and protocol so a mismatch is visible.
 * **The integrations are built from a commit.** `brunoborges/copilot-sdk-integrations` is not
   published to package registries yet, so `INTEGRATIONS_SHA` in `versions.env` pins one commit and
-  `scripts/integrations-build.sh` builds it locally. Moving to published packages later changes how
+  `scripts/integrations/build.sh` builds it locally. Moving to published packages later changes how
   each agent's `build.sh` obtains the integrations, and nothing about what is deployed.
 
 ## Why a "Runtime Concierge"
@@ -82,7 +82,7 @@ process, so asking it "which JDK are you on, and where is your code?" is a demon
 claim. It also exercises everything a real agent needs (a system prompt as a file resource, a custom
 tool, sessions, external configuration, health checks) without an application domain that would
 distract from the platform. The [contract](contract.md) is identical for every framework, and
-`scripts/agent-smoke.sh` is its executable form.
+`scripts/workloads/smoke.sh` is its executable form.
 
 ## Why kind, and what is not in scope
 

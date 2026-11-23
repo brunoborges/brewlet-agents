@@ -70,7 +70,7 @@ compiles with `tsc`, runs `npm prune --omit=dev`, then moves `node_modules` to t
 on the host's Node (26) or the runtime's (24); the script fails if a `*.node` file appears. It also deletes
 npm's hidden `node_modules/.package-lock.json`, which would leak the registry's URLs and host paths.
 
-The integration packages are not published. `scripts/integrations/node.sh` (run by `make build`) packs them
+The integration packages are not published. `scripts/integrations/languages/node.sh` (run by `make build`) packs them
 from the pinned `copilot-sdk-integrations` commit into `build/integrations/node/*.tgz`, and `package.json`
 points at them with repository-relative `file:../../build/integrations/node/...`. Direct dependencies are
 pinned exactly and the transitive ones resolve at build time. No `package-lock.json` is committed: a lockfile

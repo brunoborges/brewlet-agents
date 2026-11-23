@@ -86,7 +86,7 @@ same way for the summarizer; the errors of `POST /api/summaries` are in its
 See [patch day](rotation.md) for what the rotation does. Three things you may meet when you run it:
 
 * **The agents still run the old JDK after `make rotate`.** Only Pods that start after a rotation use the
-  new generation. `scripts/demo-rotation.sh` waits a minute for Brewlet's operator to restart the agents
+  new generation. `scripts/demos/rotation.sh` waits a minute for Brewlet's operator to restart the agents
   and otherwise runs `kubectl rollout restart` itself. By hand:
   `kubectl -n agents rollout restart deployment`. See [how the Pods follow](rotation.md#how-the-pods-follow).
 * **`note: current source could not be inspected for compatibility comparison: … DigestMismatch`.**
@@ -100,7 +100,7 @@ See [patch day](rotation.md) for what the rotation does. Three things you may me
 * **`the RuntimeImage changed while the CLI was patching it (attempt 1 of 5); asking again`.** Brewlet's
   operator updates the `RuntimeImage` status about every 30 seconds, even when nothing is happening, and
   `brewlet k8s runtime rotate` reads the object and then patches it. When the two cross, the API server
-  answers `the object has been modified` and nothing is written. `scripts/runtime-rotate.sh` asks again, up
+  answers `the object has been modified` and nothing is written. `scripts/platform/runtime-rotate.sh` asks again, up
   to five times. If you run the Brewlet command by hand and see that error, run it again.
 
 ## Builds

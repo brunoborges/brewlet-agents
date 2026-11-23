@@ -1,5 +1,5 @@
 # The dependencies of the agent, resolved for the Linux runtime by build.sh (see the README, "Build notes").
-# The Copilot integration wheels are not listed: scripts/integrations/python.sh builds them from the pinned
+# The Copilot integration wheels are not listed: scripts/integrations/languages/python.sh builds them from the pinned
 # copilot-sdk-integrations tree and build.sh installs them from build/integrations/python.
 annotated-doc==0.0.7
 annotated-types==0.8.0

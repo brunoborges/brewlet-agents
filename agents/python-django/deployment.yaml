@@ -1,7 +1,7 @@
 # python-django on Kubernetes: the complete deployment, readable top to bottom.
 #
 # `make deploy AGENT=python-django` applies this file as written, except that it replaces the two
-# `image:` lines with the digests that `make publish` and `make sidecar` pushed (scripts/agent-pin.sh).
+# `image:` lines with the digests that `make publish` and `make sidecar` pushed (scripts/workloads/pin.sh).
 # Brewlet runs only digest-pinned application images, which is why the file names the tags.
 #
 # One Pod, two containers, two owners:

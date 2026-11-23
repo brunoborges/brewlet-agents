@@ -3,7 +3,7 @@
 Eight agents, one contract. Each is the same small service, the **Runtime Concierge**, written in
 the idiom of its framework: it answers questions about the environment it runs in, using one tool that
 reads the live process. The [contract](../contract.md) is identical for all of them and
-`scripts/agent-smoke.sh` is its executable form, so a difference you see between two agents is a
+`scripts/workloads/smoke.sh` is its executable form, so a difference you see between two agents is a
 difference between frameworks, not between tasks.
 
 ## At a glance
@@ -79,6 +79,6 @@ container memory is the current working set and varies with requests and runtime
 
 ## Add a ninth
 
-An agent is a directory under `agents/`; `scripts/check.sh` verifies the shape and the contract without
+An agent is a directory under `agents/`; `scripts/checks/repository.sh` verifies the shape and the contract without
 needing a cluster. [What an agent directory contains](../contract.md#what-an-agent-directory-contains)
 lists the files, and the Spring agent is the reference to copy.

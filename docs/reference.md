@@ -25,7 +25,7 @@
 | `make layers AGENT=…` | Shows the pushed artifact's layers and their compressed sizes. |
 | `make footprint [AGENT=…]` | The artifact size and the memory each container of the deployed agents and apps uses right now. |
 | `make deploy AGENT=…` | Applies the `deployment.yaml` with its images pinned to the published digests. |
-| `make smoke AGENT=…` | The checks, through a port-forward: the contract for an agent, `scripts/app-smoke.sh` for an app. `REQUIRE_AUTH=1` makes the live model call mandatory. |
+| `make smoke AGENT=…` | The checks, through a port-forward: the contract for an agent, `scripts/workloads/app-smoke.sh` for an app. `REQUIRE_AUTH=1` makes the live model call mandatory. |
 | `make agent AGENT=…` | The four above, in order. |
 | `make undeploy AGENT=…` | Removes it from the cluster. |
 | `make logs AGENT=…` | Its recent logs, and its sidecar's. |
@@ -60,7 +60,7 @@
 
 ## Static checks
 
-`make check` runs `scripts/check.sh`, which CI runs too. It needs no cluster and verifies that:
+`make check` runs `scripts/checks/repository.sh`, which CI runs too. It needs no cluster and verifies that:
 
 * `versions.env` and the runtime catalog are complete;
 * every agent has a valid `agent.env`, a `launch.json` that lists its runtime, a system prompt
@@ -110,7 +110,7 @@ absolute path.
 | Runtime id | Image | Interpreter |
 |------------|-------|-------------|
 | `java-25` | `mcr.microsoft.com/openjdk/jdk:25-distroless` | `/usr/jdk/bin/java` |
-| `java-25-jlib` | `java-25` plus the jlib-inspector agent, built by `scripts/runtime-build.sh` and pushed to the local registry | `/usr/jdk/bin/java` |
+| `java-25-jlib` | `java-25` plus the jlib-inspector agent, built by `scripts/platform/runtime-build.sh` and pushed to the local registry | `/usr/jdk/bin/java` |
 | `node-24` | `gcr.io/distroless/nodejs24-debian13` | `/nodejs/bin/node` |
 | `python-3.13` | `gcr.io/distroless/python3-debian13` | `/usr/bin/python3` |
 | `dotnet-10` | `mcr.microsoft.com/dotnet/aspnet:10.0-azurelinux3.0-distroless` | `/usr/bin/dotnet` |

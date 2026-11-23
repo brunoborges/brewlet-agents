@@ -22,7 +22,7 @@
     <micronaut.core.version>5.2.17</micronaut.core.version>
     <micronaut.serialization.version>3.2.5</micronaut.serialization.version>
     <copilot-sdk.version>2.0.1</copilot-sdk.version>
-    <!-- Built by scripts/integrations-build.sh into the shared build/m2 repository. -->
+    <!-- Built by scripts/integrations/build.sh into the shared build/m2 repository. -->
     <copilot.integration.version>0.1.0-SNAPSHOT</copilot.integration.version>
     <main.class>io.github.brunoborges.brewletagents.concierge.ConciergeApplication</main.class>
   </properties>

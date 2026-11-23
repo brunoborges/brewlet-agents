@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# The jlib-ui's own checks, run by scripts/app-smoke.sh against the deployed Service. They also work
+# The jlib-ui's own checks, run by scripts/workloads/app-smoke.sh against the deployed Service. They also work
 # by hand against any instance:
 #
 #   apps/jlib-ui/smoke.sh http://localhost:3000
 #
 # They only read. The WebSocket on port 3001 is not covered: the smoke test forwards one port.
 set -euo pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/smoke-lib.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib/smoke.sh"
 need curl jq
 
 base="${1:-}"

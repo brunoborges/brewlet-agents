@@ -21,7 +21,7 @@
     <!-- The summarizer runs on java-25-jlib, the Ops-owned java-25 runtime plus jlib-inspector. -->
     <java.version>25</java.version>
     <maven.compiler.release>25</maven.compiler.release>
-    <!-- Built by scripts/integrations-build.sh into the shared build/m2 repository. -->
+    <!-- Built by scripts/integrations/build.sh into the shared build/m2 repository. -->
     <copilot.integration.version>0.1.0-SNAPSHOT</copilot.integration.version>
   </properties>
 

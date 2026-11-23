@@ -21,7 +21,7 @@
     <!-- The Ops-owned runtime is Java 25 (runtimes/java-25.env), so compile for it. -->
     <java.version>25</java.version>
     <maven.compiler.release>25</maven.compiler.release>
-    <!-- Built by scripts/integrations-build.sh into the shared build/m2 repository. -->
+    <!-- Built by scripts/integrations/build.sh into the shared build/m2 repository. -->
     <copilot.integration.version>0.1.0-SNAPSHOT</copilot.integration.version>
   </properties>
 

@@ -83,7 +83,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Install the Brewlet CLI
-        run: scripts/install-brewlet.sh
+        run: scripts/platform/install-brewlet.sh
       - name: Build the artifact (code, dependencies, launch.json)
         env:
           WORKLOAD: ${{ matrix.name }}

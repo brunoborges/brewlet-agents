@@ -68,7 +68,7 @@ and `lifespan="off"` (Django's ASGI handler does not speak lifespan). `/runtime`
   <aarch64|x86_64>-manylinux_2_28 --only-binary :all: --target site-packages -r requirements.txt <wheels>`. The runtime
   has no compiler and no pip, so only binary wheels qualify. `pydantic_core` is the one compiled dependency: an
   `ARCH=amd64` build differs only in that file (5.1 MiB, not 4.7) and runs in the runtime image as amd64.
-* The integrations are not on PyPI. `scripts/integrations/python.sh` (run by `make build`) builds wheels of
+* The integrations are not on PyPI. `scripts/integrations/languages/python.sh` (run by `make build`) builds wheels of
   `copilot-agent-core` and `copilot-django` from the pinned `copilot-sdk-integrations` commit into
   `build/integrations/python/`; [`requirements.txt`](requirements.txt) pins everything else exactly.
 * Two layers ([`layers`](layers)): the libraries, then the project, so a code change ships 20 KiB instead of 13.4 MiB;

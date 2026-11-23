@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The wikipedia-frontend's own checks, run by scripts/app-smoke.sh against the deployed Service. They
+# The wikipedia-frontend's own checks, run by scripts/workloads/app-smoke.sh against the deployed Service. They
 # also work by hand against any instance:
 #
 #   apps/wikipedia-frontend/smoke.sh http://localhost:3000
@@ -8,8 +8,8 @@
 # the two. The last one summarizes a real article through both; without credentials it expects the
 # documented 503, unless REQUIRE_AUTH=1 makes the credentials mandatory.
 set -euo pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/smoke-lib.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib/smoke.sh"
 need curl jq
 
 base="${1:-}"

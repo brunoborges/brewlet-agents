@@ -46,7 +46,7 @@ observability stack, are in [`apps/`](../apps/README.md).
 
 ## The Runtime Concierge contract
 
-Every agent serves HTTP on `$PORT` (8080) and is validated by `scripts/agent-smoke.sh`, which is the
+Every agent serves HTTP on `$PORT` (8080) and is validated by `scripts/workloads/smoke.sh`, which is the
 executable form of this contract.
 
 ### Endpoints
@@ -152,16 +152,16 @@ agents/<name>/
 * `deployment.yaml` is complete and is applied as written, so reading it shows exactly what runs: the
   Pod's two containers, resources, security settings and probes. The only thing `make deploy`
   changes is the two `image:` lines, which name tags in the file and get the digests that
-  `make publish` and `make sidecar` pushed (`scripts/agent-pin.sh`). `make check` fails if the file
+  `make publish` and `make sidecar` pushed (`scripts/workloads/pin.sh`). `make check` fails if the file
   drifts from `agent.env` or `versions.env` (name, namespace, runtime, sidecar version).
 * `build.sh` runs with `APP_DIR` (output directory), `ARCH` (`arm64` or `amd64`) and
   `INTEGRATIONS_OUT` (the pinned integrations for this language, built by
-  `scripts/integrations-build.sh`). Dependencies must be resolved for **linux/`$ARCH` and the
+  `scripts/integrations/build.sh`). Dependencies must be resolved for **linux/`$ARCH` and the
   runtime's ABI**, not for the build host; Brewlet runs no package manager.
 * `layers` stacks layers in order. Put the stable, large layer (dependencies) first and the small,
   fast-changing one (your code) last, so a code change re-pushes kilobytes, not megabytes.
 * The artifact file system must be world-readable and free of extended attributes;
-  `scripts/agent-build.sh` normalizes modes and strips macOS attributes before packaging.
+  `scripts/workloads/build.sh` normalizes modes and strips macOS attributes before packaging.
 * `launch.json` is the only contract with the runtime: an absolute `entrypoint` (the runtime's
   interpreter), `args`, `workingDir: "/app"`, an `env` without `PATH`, and `runtimeImages`.
 

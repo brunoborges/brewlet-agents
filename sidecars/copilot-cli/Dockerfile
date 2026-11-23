@@ -7,7 +7,7 @@
 # else in the cluster can. The agent artifact carries no CLI and never sees the
 # GitHub token: credentials live only in this container.
 #
-# Build context: ./sidecars/copilot-cli   (see scripts/sidecar-build.sh)
+# Build context: ./sidecars/copilot-cli   (see scripts/platform/sidecar-build.sh)
 ARG FETCH_IMAGE
 ARG SIDECAR_BASE_IMAGE
 

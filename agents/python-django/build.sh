@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Builds the agent into $APP_DIR. Called by scripts/agent-build.sh, which then packages
+# Builds the agent into $APP_DIR. Called by scripts/workloads/build.sh, which then packages
 # $APP_DIR as a Brewlet application artifact (see the "layers" file next to this script).
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
-source "$ROOT/scripts/lib.sh"
-: "${APP_DIR:?run this through scripts/agent-build.sh}"
-: "${ARCH:?run this through scripts/agent-build.sh}"
-: "${INTEGRATIONS_OUT:?run this through scripts/agent-build.sh}"
+source "$ROOT/scripts/lib/common.sh"
+: "${APP_DIR:?run this through scripts/workloads/build.sh}"
+: "${ARCH:?run this through scripts/workloads/build.sh}"
+: "${INTEGRATIONS_OUT:?run this through scripts/workloads/build.sh}"
 need uv
 
 # The runtime is Linux on glibc with CPython 3.13 whatever the build host is, so the dependencies are
@@ -20,7 +20,7 @@ esac
 
 WHEELS=("$INTEGRATIONS_OUT"/copilot_agent_core-*.whl "$INTEGRATIONS_OUT"/copilot_django-*.whl)
 [ -f "${WHEELS[0]}" ] && [ -f "${WHEELS[1]}" ] \
-  || die "the integration wheels are missing in $INTEGRATIONS_OUT: run scripts/integrations-build.sh python"
+  || die "the integration wheels are missing in $INTEGRATIONS_OUT: run scripts/integrations/build.sh python"
 
 SITE="$APP_DIR/deps/site-packages"
 mkdir -p "$SITE" "$APP_DIR/code"

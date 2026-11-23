@@ -6,17 +6,17 @@
 # API, on the UI port, returns the same data as JSON, which is how `make telemetry` checks that
 # something arrived.
 #
-# `scripts/observability.sh` applies this file as written, except that it replaces the `image:` line
+# `scripts/observability/deploy.sh` applies this file as written, except that it replaces the `image:` line
 # with the digest in versions.env (OTEL_DASHBOARD_IMAGE): Aspire is a vendor image, and the file
 # names its tag. It is an ordinary container, not a Brewlet workload: Brewlet is for applications
 # that run on a platform-owned runtime, and this one ships its own.
 #
 # Reach the dashboard with `make dashboards` (a port-forward). Its login is a token that
-# scripts/observability.sh generates into the Secret below on first use. The OTLP ports have no
+# scripts/observability/deploy.sh generates into the Secret below on first use. The OTLP ports have no
 # authentication and take any telemetry from inside the cluster: they are ClusterIP only, and a
 # NetworkPolicy would restrict who may send on a cluster that is not just yours.
 #
-# Not in this file: the namespace and the Secret (scripts/observability.sh creates both).
+# Not in this file: the namespace and the Secret (scripts/observability/deploy.sh creates both).
 apiVersion: v1
 kind: ServiceAccount
 metadata:

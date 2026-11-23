@@ -74,8 +74,8 @@ locations from their jars, the JDK home from `java.home` (`/usr/jdk`).
 
 ## Build notes
 
-* Host tools: Maven 3.9+ and JDK 25. `scripts/mvn.sh` points Maven at the shared `build/m2`, where
-  `scripts/integrations-build.sh java` installed `copilot-micronaut` and its processor.
+* Host tools: Maven 3.9+ and JDK 25. `scripts/integrations/mvn.sh` points Maven at the shared `build/m2`, where
+  `scripts/integrations/build.sh java` installed `copilot-micronaut` and its processor.
 * Pure Java, so there is one platform-neutral build. The runtime ABI is `maven.compiler.release=25`, the Ops
   `java-25` runtime.
 * Compile-time DI: `maven-compiler-plugin` puts `micronaut-inject-java`, `micronaut-serde-processor`, the

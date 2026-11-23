@@ -34,7 +34,7 @@ make dashboards          # open the dashboards on localhost
 | Container | `agent` | `app` |
 | Copilot CLI sidecar | Always | Only with `SIDECAR=copilot-cli`, and then in the `agents` namespace, where its Secret lives |
 | Copilot SDK integration | Built from the pinned commit, for its language | Only with `INTEGRATIONS=<language>` |
-| Checked by | `scripts/agent-smoke.sh`, the executable contract | `scripts/app-smoke.sh`: the health path, then the app's own `smoke.sh` |
+| Checked by | `scripts/workloads/smoke.sh`, the executable contract | `scripts/workloads/app-smoke.sh`: the health path, then the app's own `smoke.sh` |
 
 What is the same: the artifact (layers in a `layers` file, plus `launch.json`, with no interpreter in it), the
 build, publish, deploy and rotation scripts, and the hardening every Pod gets: non-root, a read-only root

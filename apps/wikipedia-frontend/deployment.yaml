@@ -1,7 +1,7 @@
 # wikipedia-frontend on Kubernetes: the complete deployment, readable top to bottom.
 #
 # `make deploy APP=wikipedia-frontend` applies this file as written, except that it replaces the
-# `image:` line with the digest that `make publish` pushed (scripts/agent-pin.sh). Brewlet runs only
+# `image:` line with the digest that `make publish` pushed (scripts/workloads/pin.sh). Brewlet runs only
 # digest-pinned application images, which is why the file names the tag.
 #
 # One container: the application artifact (code + launch.json, nothing else). Brewlet supplies

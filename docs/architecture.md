@@ -63,15 +63,15 @@ flowchart LR
 
 | Step | Script | What matters |
 |------|--------|--------------|
-| Build the integrations | `scripts/integrations-build.sh` | Builds the pinned `copilot-sdk-integrations` commit for the agent's language, once. |
+| Build the integrations | `scripts/integrations/build.sh` | Builds the pinned `copilot-sdk-integrations` commit for the agent's language, once. |
 | Fill the app directory | `agents/<name>/build.sh` | Resolves dependencies for the **target** (`linux/<arch>` and the runtime's libc), not for your laptop. Brewlet runs no package manager. |
-| Package | `scripts/agent-build.sh` | Normalizes file modes, strips macOS extended attributes, and runs `brewlet build` with the agent's `layers` file. Dependencies go in the first layer and the code in the last, so a code change pushes kilobytes. |
-| Publish | `scripts/agent-publish.sh` | `brewlet push` to the local registry, then `brewlet verify` on the digest. Brewlet runs only digest-pinned applications. |
-| Deploy | `scripts/agent-deploy.sh` | Applies the agent's own `deployment.yaml`, with its two images pinned to the digests just published, and waits for the rollout. |
-| Verify | `scripts/agent-smoke.sh` | The checks of the [contract](contract.md), over a port-forward. |
+| Package | `scripts/workloads/build.sh` | Normalizes file modes, strips macOS extended attributes, and runs `brewlet build` with the agent's `layers` file. Dependencies go in the first layer and the code in the last, so a code change pushes kilobytes. |
+| Publish | `scripts/workloads/publish.sh` | `brewlet push` to the local registry, then `brewlet verify` on the digest. Brewlet runs only digest-pinned applications. |
+| Deploy | `scripts/workloads/deploy.sh` | Applies the agent's own `deployment.yaml`, with its two images pinned to the digests just published, and waits for the rollout. |
+| Verify | `scripts/workloads/smoke.sh` | The checks of the [contract](contract.md), over a port-forward. |
 
 The [apps](apps/index.md) go through the same scripts, from `apps/<name>/`: `build.sh` fills the directory, and
-`scripts/app-smoke.sh` replaces the contract checks. An app has the sidecar only when its `app.env` asks for it.
+`scripts/workloads/app-smoke.sh` replaces the contract checks. An app has the sidecar only when its `app.env` asks for it.
 
 The artifact is just three kinds of file. The `launch.json` is the whole contract with the runtime:
 
@@ -158,8 +158,8 @@ not by the artifact or the Pod, and it reports to two places that the Pod's envi
 |-------|----------|-------|
 | kind cluster `brewlet-agents`, one node | `cluster/kind-config.yaml` | containerd is configured to find the registry at `localhost:5001`. |
 | Local registry | a Docker container, `brewlet-agents-registry` | Plain HTTP on the Docker network. Holds artifacts, the sidecar, the `java-25-jlib` runtime and the runtime-rotation demo image. |
-| Brewlet 0.11.0 | Helm chart + node provisioner | Installed by `scripts/cluster-up.sh`; the version is `BREWLET_VERSION` in `versions.env`. The chart's dashboard and metrics Services are enabled. |
-| Runtimes | `runtimes/*.env`, registered by `scripts/runtime-register.sh` | Each pins an image digest, the interpreter path and the user id. |
-| A derived runtime | `runtimes/java-25-jlib/`, built by `scripts/runtime-build.sh` | `java-25` with the jlib-inspector agent. Approved by the digest of the image the build pushed. |
+| Brewlet 0.11.0 | Helm chart + node provisioner | Installed by `scripts/platform/cluster-up.sh`; the version is `BREWLET_VERSION` in `versions.env`. The chart's dashboard and metrics Services are enabled. |
+| Runtimes | `runtimes/*.env`, registered by `scripts/platform/runtime-register.sh` | Each pins an image digest, the interpreter path and the user id. |
+| A derived runtime | `runtimes/java-25-jlib/`, built by `scripts/platform/runtime-build.sh` | `java-25` with the jlib-inspector agent. Approved by the digest of the image the build pushed. |
 | Copilot CLI sidecar | `sidecars/copilot-cli` | A distroless image with the checksum-verified CLI release. |
-| Observability stack | `cluster/observability/`, `apps/jlib-server`, `apps/jlib-ui`, deployed by `scripts/observability.sh` | The Aspire OpenTelemetry dashboard, the jlib-inspector server and its dashboard, in the `observability` namespace. |
+| Observability stack | `cluster/observability/`, `apps/jlib-server`, `apps/jlib-ui`, deployed by `scripts/observability/deploy.sh` | The Aspire OpenTelemetry dashboard, the jlib-inspector server and its dashboard, in the `observability` namespace. |

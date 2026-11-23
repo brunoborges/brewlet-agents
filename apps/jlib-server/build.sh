@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Builds the app into $APP_DIR. Called by scripts/agent-build.sh, which then packages
+# Builds the app into $APP_DIR. Called by scripts/workloads/build.sh, which then packages
 # $APP_DIR as a Brewlet application artifact (see the "layers" file next to this script).
 #
 # Nothing is compiled: the server is the release jar of jlib-inspector, taken from its GitHub
 # release and checked against the SHA-256 in versions.env before it goes into the artifact.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$HERE/../../scripts/lib.sh"
-: "${APP_DIR:?run this through scripts/agent-build.sh}"
+source "$HERE/../../scripts/lib/common.sh"
+: "${APP_DIR:?run this through scripts/workloads/build.sh}"
 need curl openssl
 
 JAR="jlib-inspector-server-${JLIB_INSPECTOR_VERSION}-shaded.jar"

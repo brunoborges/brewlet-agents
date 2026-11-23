@@ -10,7 +10,7 @@ beforehand, on the machine and network you will present from (see the [checklist
 
 ```bash
 make up && make agents && make auth
-scripts/demo-rotation.sh previous     # rewind java-25 to "last quarter's" JDK, so the demo can patch it
+scripts/demos/rotation.sh previous     # rewind java-25 to "last quarter's" JDK, so the demo can patch it
 make rotate-status                     # confirm: every Java agent is on the older JDK
 ```
 
@@ -25,7 +25,7 @@ On screen: a terminal at 18 pt or more in the repository root, and the diagram o
 | 1:00 | [One Pod, three owners](#2-one-pod-three-owners-2-minutes) | `make status`, `make inspect AGENT=java-spring` |
 | 3:00 | [The artifact is only the app](#3-the-artifact-is-only-the-app-2-minutes) | `make layers`, `cat launch.json` |
 | 5:00 | [Ask it, then try to break it](#4-ask-it-then-try-to-break-it-2-minutes) | `make ask` |
-| 7:00 | [Patch day](#5-patch-day-2-minutes) | `scripts/demo-rotation.sh current` |
+| 7:00 | [Patch day](#5-patch-day-2-minutes) | `scripts/demos/rotation.sh current` |
 | 9:00 | [Close](#6-close-1-minute) | - |
 
 ### 1. The idea (1 minute)
@@ -132,7 +132,7 @@ The Java agents run on the older JDK. Show it, then be the Ops team:
 
 ```bash
 make rotate-status
-scripts/demo-rotation.sh current
+scripts/demos/rotation.sh current
 ```
 
 `make rotate-status` prints the runtime, then one line per Java agent. Point at the three columns:
@@ -146,7 +146,7 @@ scripts/demo-rotation.sh current
 > "This is last quarter's JDK. A patch has shipped. I am the Ops team, I do one thing: point the `java-25`
 > runtime at the new image."
 
-`scripts/demo-rotation.sh current` rotates it. It takes about 20 seconds. Brewlet prints what the rotation
+`scripts/demos/rotation.sh current` rotates it. It takes about 20 seconds. Brewlet prints what the rotation
 will touch, installs the new generation on the node next to the old one, and the operator replaces the
 agents' Pods, one Deployment at a time. Then the script prints the table again:
 
@@ -215,6 +215,6 @@ make layers AGENT=java-spring                        # what was pushed
 make ask AGENT=java-spring Q="Which JDK are you on?" # the model, through the tool
 make whoami AGENT=java-spring                        # the same facts, without a model
 make rotate-status                                   # JDK and artifact digest of each Java agent
-scripts/demo-rotation.sh current                     # patch day
+scripts/demos/rotation.sh current                     # patch day
 make footprint                                       # what each agent and sidecar costs
 ```

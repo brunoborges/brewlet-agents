@@ -68,7 +68,7 @@ to the sidecar through the `CopilotClient` that `AddCopilot` registers.
 
 ## Build notes
 
-* Host tools: .NET SDK 10.0.100 or newer and network access to nuget.org. `scripts/integrations-build.sh dotnet` packs
+* Host tools: .NET SDK 10.0.100 or newer and network access to nuget.org. `scripts/integrations/build.sh dotnet` packs
   the integration into `build/integrations/dotnet`, and [`nuget.config`](nuget.config) makes that a local feed through
   a repo-relative path. The version is stamped `1.0.0-g<sha>` so a new pin never meets a stale copy in NuGet's global
   cache; the csproj floats it (`*-*`), because the feed holds exactly that package.
@@ -76,7 +76,7 @@ to the sidecar through the `CopilotClient` that `AddCopilot` registers.
   linux-arm64|linux-x64 --self-contained false -p:UseAppHost=false` (settings in [`Concierge.csproj`](Concierge.csproj)),
   so only the libraries outside the shared framework ship, split into `deps` and `code` ([`layers`](layers)); any
   unexpected file fails the build.
-* Reproducible: `scripts/agent-build.sh` pins the mtimes that Brewlet keeps in layer tarballs and the csproj drops the
+* Reproducible: `scripts/workloads/build.sh` pins the mtimes that Brewlet keeps in layer tarballs and the csproj drops the
   SDK's git-commit stamp, so unchanged sources give the same digest (`sha256:0ff56e2eb3e8...`, whatever the commit, also
   from an empty NuGet cache) and a code-only change keeps the `deps` digest (`27d94e38c644...`).
 

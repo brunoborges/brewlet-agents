@@ -41,12 +41,12 @@ make rotate-status   # the JDK every agent runs on, next to the artifact it runs
 make rotate          # rewind java-25 to an older JDK ("last quarter"), then patch it back
 ```
 
-`make rotate` is `scripts/demo-rotation.sh all`. For a live demo, rewind beforehand and patch on
+`make rotate` is `scripts/demos/rotation.sh all`. For a live demo, rewind beforehand and patch on
 stage:
 
 ```bash
-scripts/demo-rotation.sh previous    # before the audience arrives
-scripts/demo-rotation.sh current     # the demo: patch day
+scripts/demos/rotation.sh previous    # before the audience arrives
+scripts/demos/rotation.sh current     # the demo: patch day
 ```
 
 ## What to look at
@@ -79,7 +79,7 @@ Before, with `make rotate-status`:
   java-spring      25.0.5.1+2-LTS Microsoft   1    sha256:86643a3e65fe
 ```
 
-"Last quarter", with `scripts/demo-rotation.sh previous` (19 seconds for the whole script):
+"Last quarter", with `scripts/demos/rotation.sh previous` (19 seconds for the whole script):
 
 ```text
 ==> runtime java-25: generation 2, image sha256:717f479547da
@@ -89,7 +89,7 @@ Before, with `make rotate-status`:
   java-spring      25.0.4.1+1-LTS Microsoft   2    sha256:86643a3e65fe
 ```
 
-Patch day, with `scripts/demo-rotation.sh current` (22 seconds):
+Patch day, with `scripts/demos/rotation.sh current` (22 seconds):
 
 ```text
 ==> runtime java-25: generation 3, image sha256:e84386716537
@@ -173,7 +173,7 @@ has to restart the agents, and Brewlet makes that an explicit opt-in on two leve
 
 | Opt-in | Where | Set by |
 |--------|-------|--------|
-| `operator.rotationRestarts.enabled=true` (and, optionally, `namespaces`) | The Helm release of Brewlet | `scripts/cluster-up.sh`, for the `agents` and `observability` namespaces |
+| `operator.rotationRestarts.enabled=true` (and, optionally, `namespaces`) | The Helm release of Brewlet | `scripts/platform/cluster-up.sh`, for the `agents` and `observability` namespaces |
 | `brewlet.sh/restart-on-rotation: "true"` | The metadata of the **Deployment** | each `agents/<name>/deployment.yaml` and `apps/<name>/deployment.yaml`, so every agent and app has it |
 
 With both set, the operator stamps the new generation on the Pod template of every Deployment that
@@ -188,7 +188,7 @@ Without the opt-in, restart the agents yourself and they pick up the new generat
 kubectl -n agents rollout restart deployment
 ```
 
-`scripts/demo-rotation.sh` waits a minute for the operator, and does exactly that if the operator did
+`scripts/demos/rotation.sh` waits a minute for the operator, and does exactly that if the operator did
 not act.
 
 !!! note "A derived runtime is rotated on its own"
@@ -207,7 +207,7 @@ brewlet k8s runtime status java-25
 kubectl get runtimeimage java-25 -o yaml
 ```
 
-`scripts/runtime-rotate.sh` adds the one thing a script needs: it waits until the new generation is
+`scripts/platform/runtime-rotate.sh` adds the one thing a script needs: it waits until the new generation is
 installed *and* `RotationComplete` has seen the current spec, because waiting on the generation alone
 would race the condition left over from the previous rotation.
 

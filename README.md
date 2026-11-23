@@ -130,7 +130,13 @@ runtimes/java-25-jlib/   the Dockerfile of java-25-jlib, the runtime that adds t
 sidecars/          the Copilot CLI sidecar image
 cluster/           the kind cluster configuration; cluster/observability/ holds the Aspire dashboard
 demo/rotation/     builds the "before the patch" runtime for make rotate
-scripts/           everything the Makefile runs (shell, nothing to install)
+scripts/platform/       set up the cluster, runtimes, sidecar and credentials
+scripts/workloads/      build, publish, deploy, inspect and smoke-test an agent or app
+scripts/integrations/   build the language integrations and run Maven against the shared cache
+scripts/observability/  deploy the telemetry stack, open dashboards and verify telemetry
+scripts/demos/          run the runtime rotation and Wikipedia summarizer examples
+scripts/checks/         check host tools (make doctor) and validate the repository (make check)
+scripts/lib/            shared shell helpers sourced by the other scripts
 docs/              the documentation site (mkdocs-material)
 versions.env       every pinned version and digest, in one place
 ```
