@@ -1,1 +1,1 @@
-<!-- source: apps/wikipedia-frontend/README.md -->
+<!-- source: agents/wikipedia/wikipedia-frontend/README.md -->

@@ -1,8 +1,8 @@
 name: End to end
 
-# Brings the whole platform up on a GitHub-hosted runner (kind, a local registry, Brewlet, the
-# Ops-owned runtimes and the Copilot CLI sidecar), then deploys agents and smoke-tests them. It is
-# much slower than CI, so it runs on demand and once a week instead of on every push.
+# Brings the whole platform up on a GitHub-hosted runner (kind, a local registry, Brewlet and the
+# Ops-owned runtimes), then deploys agents and smoke-tests them. It is much slower than CI, so it
+# runs on demand and once a week instead of on every push.
 on:
   workflow_dispatch:
     inputs:
@@ -57,7 +57,7 @@ jobs:
 
       - name: Check the host
         run: make doctor
-      - name: Bring up the platform (kind, registry, Brewlet, runtimes, Copilot CLI sidecar)
+      - name: Bring up the platform (kind, registry, Brewlet, runtimes)
         run: make up
 
       - name: Build, publish, deploy and smoke-test the agents
@@ -70,9 +70,7 @@ jobs:
 
       - name: Deploy the telemetry stack, the Wikipedia summarizer and its front-end
         if: env.RUN_APPS == 'true'
-        run: |
-          make observability
-          make wikipedia
+        run: make -C agents/wikipedia run
 
       - name: Give the Copilot CLI sidecar a GitHub token and run the live checks
         if: env.HAS_COPILOT_TOKEN == 'true'
@@ -99,7 +97,7 @@ jobs:
         if: env.RUN_APPS == 'true'
         run: |
           make telemetry
-          scripts/dashboards.sh --check
+          agents/wikipedia/observability/dashboards.sh --check
 
       - name: Rotate the java-25 runtime and watch the Java agents follow
         if: inputs.rotation

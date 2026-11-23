@@ -43,11 +43,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - id: find
-        # One job per agents/<name>/agent.env and apps/<name>/app.env, so a new agent or app is built
+        # One job per agents/<name>/agent.env and agents/wikipedia/<name>/app.env, so a new agent or app is built
         # without touching this file. "kind" is the directory the artifact is built under.
         run: |
-          matrix="$(for env in agents/*/agent.env apps/*/app.env; do
-              jq -cn --arg kind "$(basename "$(dirname "$(dirname "$env")")")" \
+          matrix="$(for env in agents/*/agent.env agents/wikipedia/*/app.env; do
+              case "$env" in */agent.env) kind=agents ;; */app.env) kind=apps ;; esac
+              jq -cn --arg kind "$kind" \
                      --arg name "$(basename "$(dirname "$env")")" \
                      --arg language "$(sed -n 's/^LANGUAGE=//p' "$env")" \
                      '{kind: $kind, name: $name, language: $language}'
@@ -83,7 +84,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Install the Brewlet CLI
-        run: scripts/install-brewlet.sh
+        run: scripts/platform/install-brewlet.sh
       - name: Build the artifact (code, dependencies, launch.json)
         env:
           WORKLOAD: ${{ matrix.name }}

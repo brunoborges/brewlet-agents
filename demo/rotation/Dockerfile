@@ -8,7 +8,7 @@
 # distroless base, same uid, same layout. A runtime id is a compatibility promise and a rotation
 # keeps it.
 #
-# Built by scripts/demo-rotation.sh; every value comes from versions.env. The base images are build
+# Built by scripts/demos/rotation.sh; every value comes from versions.env. The base images are build
 # arguments without defaults on purpose: versions.env is the only place they are pinned.
 ARG FETCH_IMAGE
 ARG RUNTIME_IMAGE

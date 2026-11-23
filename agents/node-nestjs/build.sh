@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-# Builds the agent into $APP_DIR. Called by scripts/agent-build.sh, which then packages
-# $APP_DIR as a Brewlet application artifact (see the "layers" file next to this script).
+# Build the node-nestjs Brewlet artifact using the layers and launch.json in this directory.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$HERE/../../scripts/lib.sh"
-: "${APP_DIR:?run this through scripts/agent-build.sh}"
-: "${ARCH:?run this through scripts/agent-build.sh}"
+source "$HERE/../../scripts/lib/artifact.sh"
+prepare_artifact "$HERE"
 need node npm
 
 case "$ARCH" in
@@ -52,3 +50,5 @@ cp -R "$HERE/prompts" "$APP_DIR/code/prompts"
 # The runtime is Node 24 on glibc. A native addon would have to match both, and none is expected.
 addon="$(find "$APP_DIR" -name '*.node' -print -quit)"
 [ -z "$addon" ] || die "native addon in the artifact: $addon (it must be built for linux/glibc and Node 24)"
+
+package_artifact "$HERE"

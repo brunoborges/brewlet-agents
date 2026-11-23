@@ -26,7 +26,6 @@ Measured on the kind cluster; [`deployment.yaml`](deployment.yaml) asks for 100m
 | working set | idle | after asks | 4 concurrent asks |
 | --- | --- | --- | --- |
 | agent | 120 MiB | 145 MiB | 146 MiB |
-| Copilot CLI sidecar | 17 MiB | 30-60 MiB | 88 MiB |
 
 Startup is 0.5-0.9 s (`Startup completed in 533ms`). `make agent` from scratch takes about 25 s with a warm
 Maven cache (about 11 s of Maven when cold).
@@ -74,8 +73,8 @@ locations from their jars, the JDK home from `java.home` (`/usr/jdk`).
 
 ## Build notes
 
-* Host tools: Maven 3.9+ and JDK 25. `scripts/mvn.sh` points Maven at the shared `build/m2`, where
-  `scripts/integrations-build.sh java` installed `copilot-micronaut` and its processor.
+* Host tools: Maven 3.9+ and JDK 25. `scripts/integrations/mvn.sh` points Maven at the shared `build/m2`, where
+  `scripts/integrations/build.sh java` installed `copilot-micronaut` and its processor.
 * Pure Java, so there is one platform-neutral build. The runtime ABI is `maven.compiler.release=25`, the Ops
   `java-25` runtime.
 * Compile-time DI: `maven-compiler-plugin` puts `micronaut-inject-java`, `micronaut-serde-processor`, the
@@ -90,6 +89,11 @@ locations from their jars, the JDK home from `java.home` (`/usr/jdk`).
   code change replaces only the 42 KB code layer (checked: the deps layer digest stays identical).
 
 ## Run it
+
+After `make up` from the repository root, run `make run` **in this directory** to build, publish,
+deploy and smoke-test this agent. Use `./build.sh` to build just the artifact.
+
+From the repository root:
 
 ```bash
 make agent AGENT=java-micronaut      # build, publish, deploy, smoke test (make auth for the /ask check)

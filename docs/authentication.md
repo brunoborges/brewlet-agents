@@ -78,9 +78,10 @@ project follows it:
 | Keep the Service `ClusterIP` and limit who can reach it, for example with a NetworkPolicy | The sidecar listens on the Pod's loopback interface and has no Service. The [NetworkPolicy is recommended, not installed](security.md#what-is-not-covered) |
 | The connection is plain TCP without TLS | The same, which is why it never leaves the Pod |
 
-One difference: the documentation runs the published `ghcr.io/github/copilot-cli` image. This project builds its own
-sidecar image from the release tarball of the same Copilot CLI, which `versions.env` pins by version and SHA-256, and
-the build fails on a mismatch. The variables it reads are the same.
+The sidecar is the published `ghcr.io/github/copilot-cli` image the documentation runs, pinned by digest
+(`COPILOT_CLI_IMAGE` in `versions.env`), with two additions. It appends `--host 127.0.0.1`, because the image's
+server listens on every interface, which in a Pod includes the Pod IP. And it sets `HOME=/tmp`, because the root
+file system is read-only and the CLI unpacks itself and keeps its state under `$HOME`.
 
 ### An application on `java-25-jlib` reads the token from a file
 

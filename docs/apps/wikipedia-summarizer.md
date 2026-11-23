@@ -1,1 +1,1 @@
-<!-- source: apps/wikipedia-summarizer/README.md -->
+<!-- source: agents/wikipedia/wikipedia-summarizer/README.md -->

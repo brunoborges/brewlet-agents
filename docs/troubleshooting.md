@@ -33,9 +33,10 @@ Rerunning `make runtimes` is safe at any time; runtimes that are already approve
 
 | Symptom | Likely cause | What to do |
 |---------|--------------|------------|
-| `ImagePullBackOff` on the agent or the sidecar | The node cannot reach the registry as `localhost:5001`. | `docker ps` should list `brewlet-agents-registry`; `docker network inspect kind` should list it too; `docker exec brewlet-agents-control-plane cat /etc/containerd/certs.d/localhost:5001/hosts.toml` should point at `http://brewlet-agents-registry:5000`. `make cluster` rewires all three. |
-| `ImagePullBackOff` with `not found` | The artifact or sidecar was never pushed. | `make publish AGENT=<name>`, or `make sidecar`. |
-| `Pending` with `Insufficient memory` | Docker Desktop's memory is exhausted, often by other kind clusters. | Raise Docker's memory limit, delete clusters you do not need, or deploy fewer agents. A Pod's memory request is the agent's request in its `deployment.yaml` plus the sidecar's 128 MiB request; across these examples it ranges from 224 to 384 MiB. |
+| `ImagePullBackOff` on the agent | The node cannot reach the registry as `localhost:5001`. | `docker ps` should list `brewlet-agents-registry`; `docker network inspect kind` should list it too; `docker exec brewlet-agents-control-plane cat /etc/containerd/certs.d/localhost:5001/hosts.toml` should point at `http://brewlet-agents-registry:5000`. `make cluster` rewires all three. |
+| `ImagePullBackOff` with `not found` | The artifact was never pushed. | `make publish AGENT=<name>`. |
+| `ImagePullBackOff` on `copilot-cli` | The node cannot pull `ghcr.io/github/copilot-cli`. | The image is public, but the node has to reach `ghcr.io`: check Docker Desktop's network and proxy settings. |
+| `Pending` with `Insufficient memory` | Docker Desktop's memory is exhausted, often by other kind clusters. | Raise Docker's memory limit, delete clusters you do not need, or deploy fewer agents. A Pod's memory request is the agent's request in its `deployment.yaml` plus the sidecar's 192 MiB request; across these examples it ranges from 288 to 448 MiB. |
 | The Pod is rejected by admission | A manifest used a tag instead of a digest, or the runtime id in the annotation is not approved. | Use `make deploy`, which pins the digests; `kubectl get runtimeimages` lists the approved ids. |
 | `CrashLoopBackOff` of `agent` | The process exited. | `make logs AGENT=<name>` shows why. If `kubectl -n agents describe pod` reports `OOMKilled`, raise the agent container's memory limit in its `deployment.yaml` and run `make deploy AGENT=<name>`. |
 | The Pod stays `1/2` or `0/2` | The sidecar is not ready, or `/readyz` fails. | See the next sections. |
@@ -86,7 +87,7 @@ same way for the summarizer; the errors of `POST /api/summaries` are in its
 See [patch day](rotation.md) for what the rotation does. Three things you may meet when you run it:
 
 * **The agents still run the old JDK after `make rotate`.** Only Pods that start after a rotation use the
-  new generation. `scripts/demo-rotation.sh` waits a minute for Brewlet's operator to restart the agents
+  new generation. `scripts/demos/rotation.sh` waits a minute for Brewlet's operator to restart the agents
   and otherwise runs `kubectl rollout restart` itself. By hand:
   `kubectl -n agents rollout restart deployment`. See [how the Pods follow](rotation.md#how-the-pods-follow).
 * **`note: current source could not be inspected for compatibility comparison: … DigestMismatch`.**
@@ -100,7 +101,7 @@ See [patch day](rotation.md) for what the rotation does. Three things you may me
 * **`the RuntimeImage changed while the CLI was patching it (attempt 1 of 5); asking again`.** Brewlet's
   operator updates the `RuntimeImage` status about every 30 seconds, even when nothing is happening, and
   `brewlet k8s runtime rotate` reads the object and then patches it. When the two cross, the API server
-  answers `the object has been modified` and nothing is written. `scripts/runtime-rotate.sh` asks again, up
+  answers `the object has been modified` and nothing is written. `scripts/platform/runtime-rotate.sh` asks again, up
   to five times. If you run the Brewlet command by hand and see that error, run it again.
 
 ## Builds

@@ -21,7 +21,7 @@ these is reachable from outside your machine.
 ```bash
 make dashboards                          # every dashboard that is deployed
 make dashboards DASHBOARDS="jlib otel"   # only these: brewlet, jlib, otel, frontend
-scripts/dashboards.sh --check            # opens each one, requests its pages once, closes it again
+agents/wikipedia/observability/dashboards.sh --check            # opens each one, requests its pages once, closes it again
 ```
 
 The ports are fixed, because the jlib-inspector page connects to `ws://localhost:3001` on its own and needs 3000
@@ -78,7 +78,7 @@ annotations:
 Nothing else differs from `java-25`: the same distroless base, the same JDK, the same user and layout, so the id
 keeps the compatibility promise `java-25` makes. [`runtimes/java-25-jlib.env`](https://github.com/brunoborges/brewlet-agents/blob/main/runtimes/java-25-jlib.env)
 registers it (`BASE=java-25`) and
-[`runtimes/java-25-jlib/Dockerfile`](https://github.com/brunoborges/brewlet-agents/blob/main/runtimes/java-25-jlib/Dockerfile)
+[`agents/wikipedia/java-25-jlib/Dockerfile`](https://github.com/brunoborges/brewlet-agents/blob/main/agents/wikipedia/java-25-jlib/Dockerfile)
 builds it:
 
 1. A first stage downloads the agent's shaded jar from the jlib-inspector release `JLIB_INSPECTOR_VERSION`, stops
@@ -95,7 +95,7 @@ Ops baking one into a runtime it approves, and anyone who wants the application 
 ### How it is built and approved
 
 `make runtimes` approves it with the others. A derived runtime has no digest in git, because its digest exists only
-once it has been built, so [`scripts/runtime-build.sh`](https://github.com/brunoborges/brewlet-agents/blob/main/scripts/runtime-build.sh)
+once it has been built, so [`scripts/platform/runtime-build.sh`](https://github.com/brunoborges/brewlet-agents/blob/main/scripts/platform/runtime-build.sh)
 builds it, pushes it to the local registry and records the reference in `build/runtimes/java-25-jlib/image`, and the
 registration approves exactly that digest (`--insecure`, as the registry speaks plain HTTP). The image tag is a
 hash of every input and of the Dockerfile, so running the build again with the same inputs reuses the image and
@@ -104,8 +104,8 @@ the digest instead of producing another one.
 Rotate it like any runtime, with the reference the build printed:
 
 ```bash
-scripts/runtime-build.sh java-25-jlib                       # prints localhost:5001/runtimes/java-25-jlib@sha256:...
-scripts/runtime-rotate.sh java-25-jlib <that reference>
+scripts/platform/runtime-build.sh java-25-jlib                       # prints localhost:5001/runtimes/java-25-jlib@sha256:...
+scripts/platform/runtime-rotate.sh java-25-jlib <that reference>
 ```
 
 Brewlet's operator replaces the Pods of Deployments that carry `brewlet.sh/restart-on-rotation: "true"` in the
@@ -161,9 +161,9 @@ the manifest of every app on `java-25-jlib`.
 The [.NET Aspire dashboard](https://learn.microsoft.com/dotnet/aspire/fundamentals/dashboard/overview), running
 standalone as the OTLP endpoint. It is Aspire's own image, pinned by digest in `versions.env`
 (`OTEL_DASHBOARD_IMAGE`), as an ordinary container: Brewlet is for applications on a platform-owned runtime, and
-this one ships with its own. [`cluster/observability/otel-dashboard.yaml`](https://github.com/brunoborges/brewlet-agents/blob/main/cluster/observability/otel-dashboard.yaml)
-names the image by tag, and `scripts/observability.sh` substitutes the pinned digest when it applies the manifest
-(`scripts/observability.sh --manifest` prints what is applied), so a moved tag cannot change what runs.
+this one ships with its own. [`agents/wikipedia/observability/otel-dashboard.yaml`](https://github.com/brunoborges/brewlet-agents/blob/main/agents/wikipedia/observability/otel-dashboard.yaml)
+names the image by tag, and `agents/wikipedia/observability/deploy.sh` substitutes the pinned digest when it applies the manifest
+(`agents/wikipedia/observability/deploy.sh --manifest` prints what is applied), so a moved tag cannot change what runs.
 
 | Port | Service | What it is |
 | --- | --- | --- |
@@ -239,7 +239,7 @@ is valid for one hour. Paste the token into the sign-in form.
 
 * The role can only read: RuntimeImages, NodeProfiles, nodes, Pods, events and workload controllers, in every
   namespace. Rotating from the dashboard needs `dashboard.allowWrite=true` in the chart and a second role, and
-  neither is set up here: use `scripts/runtime-rotate.sh`.
+  neither is set up here: use `scripts/platform/runtime-rotate.sh`.
 * The page refuses to take a token over plain HTTP from anywhere but `localhost`, which is why the way in is a
   port-forward. It keeps the token in memory only, so reloading the page asks for it again.
 

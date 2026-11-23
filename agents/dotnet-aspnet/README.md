@@ -30,7 +30,6 @@ Measured on the kind cluster; [`deployment.yaml`](deployment.yaml) asks for 100m
 | working set | fresh Pod | after two asks | 32 asks, 8 at a time |
 | --- | --- | --- | --- |
 | agent | 55 MiB | 95 MiB | 99 MiB (peak 100) |
-| Copilot CLI sidecar | 17 MiB | 46 MiB | peak 144 MiB, then 56 MiB |
 
 Kestrel listens within 1 s of the container starting and the Pod is Ready after 3 s. `make agent` from scratch takes
 15 to 19 s with a warm NuGet cache, smoke test included; `make footprint` prints the memory numbers.
@@ -68,7 +67,7 @@ to the sidecar through the `CopilotClient` that `AddCopilot` registers.
 
 ## Build notes
 
-* Host tools: .NET SDK 10.0.100 or newer and network access to nuget.org. `scripts/integrations-build.sh dotnet` packs
+* Host tools: .NET SDK 10.0.100 or newer and network access to nuget.org. `scripts/integrations/build.sh dotnet` packs
   the integration into `build/integrations/dotnet`, and [`nuget.config`](nuget.config) makes that a local feed through
   a repo-relative path. The version is stamped `1.0.0-g<sha>` so a new pin never meets a stale copy in NuGet's global
   cache; the csproj floats it (`*-*`), because the feed holds exactly that package.
@@ -76,11 +75,16 @@ to the sidecar through the `CopilotClient` that `AddCopilot` registers.
   linux-arm64|linux-x64 --self-contained false -p:UseAppHost=false` (settings in [`Concierge.csproj`](Concierge.csproj)),
   so only the libraries outside the shared framework ship, split into `deps` and `code` ([`layers`](layers)); any
   unexpected file fails the build.
-* Reproducible: `scripts/agent-build.sh` pins the mtimes that Brewlet keeps in layer tarballs and the csproj drops the
+* Reproducible: `package_artifact` pins the mtimes that Brewlet keeps in layer tarballs and the csproj drops the
   SDK's git-commit stamp, so unchanged sources give the same digest (`sha256:0ff56e2eb3e8...`, whatever the commit, also
   from an empty NuGet cache) and a code-only change keeps the `deps` digest (`27d94e38c644...`).
 
 ## Run it
+
+After `make up` from the repository root, run `make run` **in this directory** to build, publish,
+deploy and smoke-test this agent. Use `./build.sh` to build just the artifact.
+
+From the repository root:
 
 ```bash
 make agent AGENT=dotnet-aspnet       # build, publish, deploy, smoke test (make auth for the /ask checks)

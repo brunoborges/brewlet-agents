@@ -16,8 +16,8 @@ the answer comes from the live process, not from the documentation.
 | `python-django` | Python 3.13 | Django | `python-3.13` |
 | `dotnet-aspnet` | .NET 10 | ASP.NET Core | `dotnet-10` |
 
-Workloads that follow no contract but run on the same runtimes, such as the Wikipedia summarizer and the
-observability stack, are in [`apps/`](../apps/README.md).
+The [Wikipedia example](wikipedia/README.md) runs on the same platform but has its own REST API.
+Its summarizer, frontend and observability services live together under `agents/wikipedia/`.
 
 ## The deployment model
 
@@ -40,13 +40,14 @@ observability stack, are in [`apps/`](../apps/README.md).
 * The **runtime** is a plain, framework-agnostic language image (`java-25`, `node-24`,
   `python-3.13`, `dotnet-10`) approved, patched and rotated by Ops. No runtime contains a framework
   or the Copilot SDK, so the same runtime serves every framework of that language.
-* The **Copilot CLI** is a separate sidecar container (`sidecars/copilot-cli`). The SDK reaches it
+* The **Copilot CLI** is a separate sidecar container: the image GitHub publishes,
+  `ghcr.io/github/copilot-cli`, pinned by digest (`COPILOT_CLI_IMAGE` in `versions.env`). The SDK reaches it
   over the Pod's loopback interface, authenticating with a shared connection token. It is the only
   container that ever holds GitHub credentials.
 
 ## The Runtime Concierge contract
 
-Every agent serves HTTP on `$PORT` (8080) and is validated by `scripts/agent-smoke.sh`, which is the
+Every agent serves HTTP on `$PORT` (8080) and is validated by `scripts/workloads/smoke.sh`, which is the
 executable form of this contract.
 
 ### Endpoints
@@ -141,7 +142,8 @@ agents/<name>/
 ├── deployment.yaml the whole Kubernetes manifest: ServiceAccount, Deployment, Service
 ├── launch.json     Brewlet launch descriptor; runtimeImages lists RUNTIME
 ├── layers          optional: one "<directory under $APP_DIR>:<path in the artifact>" per line
-├── build.sh        fills $APP_DIR with the final linux/$ARCH file system
+├── Makefile        make run: build, publish, deploy and smoke-test this example
+├── build.sh        directly runnable: stages the linux/$ARCH files and builds the Brewlet artifact
 ├── README.md       what the example shows and the framework specifics
 └── <sources>
 ```
@@ -151,17 +153,18 @@ agents/<name>/
   `deployment.yaml`.
 * `deployment.yaml` is complete and is applied as written, so reading it shows exactly what runs: the
   Pod's two containers, resources, security settings and probes. The only thing `make deploy`
-  changes is the two `image:` lines, which name tags in the file and get the digests that
-  `make publish` and `make sidecar` pushed (`scripts/agent-pin.sh`). `make check` fails if the file
-  drifts from `agent.env` or `versions.env` (name, namespace, runtime, sidecar version).
-* `build.sh` runs with `APP_DIR` (output directory), `ARCH` (`arm64` or `amd64`) and
-  `INTEGRATIONS_OUT` (the pinned integrations for this language, built by
-  `scripts/integrations-build.sh`). Dependencies must be resolved for **linux/`$ARCH` and the
+  changes is the agent's `image:` line, which names a tag in the file and gets the digest that
+  `make publish` pushed (`scripts/workloads/pin.sh`); the sidecar's already names `COPILOT_CLI_IMAGE`.
+  `make check` fails if the file drifts from `agent.env` or `versions.env` (name, namespace, runtime,
+  sidecar image).
+* Run `./build.sh` without arguments or environment setup. Its `prepare_artifact` call sets
+  `APP_DIR` (staging directory), `ARCH` (`arm64` or `amd64`) and `INTEGRATIONS_OUT` (the pinned
+  integrations for this language). Dependencies must be resolved for **linux/`$ARCH` and the
   runtime's ABI**, not for the build host; Brewlet runs no package manager.
 * `layers` stacks layers in order. Put the stable, large layer (dependencies) first and the small,
   fast-changing one (your code) last, so a code change re-pushes kilobytes, not megabytes.
 * The artifact file system must be world-readable and free of extended attributes;
-  `scripts/agent-build.sh` normalizes modes and strips macOS attributes before packaging.
+  `package_artifact` in `scripts/lib/artifact.sh` normalizes modes and strips macOS attributes before packaging.
 * `launch.json` is the only contract with the runtime: an absolute `entrypoint` (the runtime's
   interpreter), `args`, `workingDir: "/app"`, an `env` without `PATH`, and `runtimeImages`.
 

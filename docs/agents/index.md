@@ -3,7 +3,7 @@
 Eight agents, one contract. Each is the same small service, the **Runtime Concierge**, written in
 the idiom of its framework: it answers questions about the environment it runs in, using one tool that
 reads the live process. The [contract](../contract.md) is identical for all of them and
-`scripts/agent-smoke.sh` is its executable form, so a difference you see between two agents is a
+`scripts/workloads/smoke.sh` is its executable form, so a difference you see between two agents is a
 difference between frameworks, not between tasks.
 
 ## At a glance
@@ -24,7 +24,7 @@ built from a pinned commit (see [Design](../design.md)). Under each of them sits
 language, which talks to the Copilot CLI sidecar and never bundles it.
 
 Workloads that are not Concierges, such as the [Wikipedia summarizer](../apps/wikipedia-summarizer.md), live in
-`apps/` and are described in [Apps](../apps/index.md). They use the same runtimes, scripts and Pod hardening, and
+`agents/wikipedia/` and are described in the [Wikipedia example](../apps/index.md). They use the same runtimes, scripts and Pod hardening, and
 none of this contract.
 
 ## What is the same
@@ -66,19 +66,22 @@ are measured the same way for every language.
 This snapshot is from `make footprint` after one `make ask` for each agent. Artifact size is compressed;
 container memory is the current working set and varies with requests and runtime activity.
 
-| Agent | Artifact MiB | Agent MiB | Sidecar MiB |
-|-------|-------------:|----------:|------------:|
-| java-spring | 27.7 | 180 | 44 |
-| java-quarkus | 23.8 | 143 | 43 |
-| java-micronaut | 22.8 | 150 | 47 |
-| node-nestjs | 4.7 | 59 | 36 |
-| node-fastify | 4.2 | 52 | 37 |
-| python-django | 13.5 | 97 | 36 |
-| python-fastapi | 9.5 | 96 | 38 |
-| dotnet-aspnet | 6.0 | 122 | 42 |
+| Agent | Artifact MiB | Agent MiB |
+|-------|-------------:|----------:|
+| java-spring | 27.7 | 180 |
+| java-quarkus | 23.8 | 143 |
+| java-micronaut | 22.8 | 150 |
+| node-nestjs | 4.7 | 59 |
+| node-fastify | 4.2 | 52 |
+| python-django | 13.5 | 97 |
+| python-fastapi | 9.5 | 96 |
+| dotnet-aspnet | 6.0 | 122 |
+
+Every Pod also runs the Copilot CLI sidecar, the same image in each. Measured the same way, it holds about
+150 MiB before its first request and grows with the number of concurrent conversations.
 
 ## Add a ninth
 
-An agent is a directory under `agents/`; `scripts/check.sh` verifies the shape and the contract without
+An agent is a directory under `agents/`; `scripts/checks/repository.sh` verifies the shape and the contract without
 needing a cluster. [What an agent directory contains](../contract.md#what-an-agent-directory-contains)
 lists the files, and the Spring agent is the reference to copy.

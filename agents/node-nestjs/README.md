@@ -74,13 +74,18 @@ compiles with `tsc`, runs `npm prune --omit=dev`, then moves `node_modules` to t
 on the host's Node (26) or the runtime's (24); the script fails if a `*.node` file appears. It also deletes
 npm's hidden `node_modules/.package-lock.json`, which would leak the registry's URLs and host paths.
 
-The integration packages are not published. `scripts/integrations/node.sh` (run by `make build`) packs them
+The integration packages are not published. `scripts/integrations/languages/node.sh` (run by `make build`) packs them
 from the pinned `copilot-sdk-integrations` commit into `build/integrations/node/*.tgz`, and `package.json`
 points at them with repository-relative `file:../../build/integrations/node/...`. Direct dependencies are
 pinned exactly and the transitive ones resolve at build time. No `package-lock.json` is committed: a lockfile
 would record this registry mirror's URLs and `build/` outputs. Two from-scratch builds gave the same digest.
 
 ## Run it
+
+After `make up` from the repository root, run `make run` **in this directory** to build, publish,
+deploy and smoke-test this agent. Use `./build.sh` to build just the artifact.
+
+From the repository root:
 
 ```bash
 make agent AGENT=node-nestjs     # build, publish, deploy, smoke
@@ -91,8 +96,7 @@ make ask AGENT=node-nestjs Q="Which language runtime are you on and where is it 
 The container listens about 0.3 s after it starts; the Pod is Ready about 6 s after it is scheduled (the Copilot
 client connects on the first readiness probe). Measured on the kind node (`crictl stats`, working set): the agent
 holds 52-76 MB idle and 65-84 MB after bursts, and peaked at 80-102 MB with 16 concurrent questions and 83 MB with
-32; the sidecar holds 17 MB before its first question, 33-72 MB after some, and peaked at 166-170 MB (16 concurrent)
-and 220 MB (32). Hence `100m` and `96Mi` requests and a `192Mi` limit (about twice the agent's worst peak).
+32. Hence `100m` and `96Mi` requests and a `192Mi` limit (about twice the agent's worst peak).
 
 ## Gotchas
 

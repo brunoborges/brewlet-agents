@@ -36,7 +36,7 @@
   <ItemGroup>
     <!-- The only Copilot dependency: the integration brings the SDK in transitively. The version
          floats because the local feed holds exactly the one package that
-         scripts/integrations/dotnet.sh packed from the pinned source. -->
+         scripts/integrations/languages/dotnet.sh packed from the pinned source. -->
     <PackageReference Include="CopilotSdk.Extensions.Hosting" Version="*-*" />
   </ItemGroup>
 

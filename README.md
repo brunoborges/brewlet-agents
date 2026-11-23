@@ -10,9 +10,8 @@
 
 Eight [Microsoft Copilot SDK](https://github.com/microsoft/copilot-sdk) agents in Java, Node.js,
 Python and .NET run on a local Kubernetes cluster (`kind`) with [Brewlet](https://github.com/microsoft/brewlet).
-Beside them run four [apps](apps/README.md): a Spring Boot agent that summarizes a Wikipedia article behind a
-REST API, a Node.js front-end for it, and an observability stack with dashboards for the Brewlet runtimes,
-the jars each JVM loads and OpenTelemetry data.
+The [Wikipedia example](agents/wikipedia/README.md) pairs a Spring Boot summarizer with a Node.js frontend.
+Its jlib-inspector and OpenTelemetry dashboards show the jars the summarizer loads and the telemetry it emits.
 
 The agents use the Microsoft SDK packages: `com.microsoft:copilot-sdk` (Java),
 `@microsoft/copilot-sdk` (Node.js), `microsoft-copilot-sdk` (Python) and `Microsoft.Copilot.SDK` (.NET).
@@ -85,16 +84,28 @@ make deauth && make down        # remove the token, delete the cluster
 
 `make help` lists every target, `make list` lists the agents and the apps.
 
+To work on one example, run `make up` once from the repository root, then:
+
+```bash
+cd agents/java-spring
+make run             # build, publish, deploy and smoke-test this example
+```
+
+Each agent and app has its own `Makefile` and `./build.sh`. Run `./build.sh` for just the
+artifact; run `make publish`, `make deploy`, or `make smoke` to repeat one later step.
+The root targets use these same recipes.
+
 ### The Wikipedia summarizer and the dashboards
 
-The [apps](apps/README.md) run after `make up`. They need the token from `make auth` only to summarize:
+After `make up`, run the [Wikipedia example](agents/wikipedia/README.md) from its own directory.
+It needs the token from `make auth` only to summarize:
 
 ```bash
 export COPILOT_GITHUB_TOKEN="$(gh auth token --hostname github.com)"
 make auth                       # the sidecar's GitHub token, kept in the copilot-cli Secret
 
-make observability              # Aspire (OpenTelemetry), jlib-server and the jlib-inspector dashboard
-make wikipedia                  # the Spring Boot summarizer and the Node.js front-end
+cd agents/wikipedia
+make run                        # telemetry services, then the summarizer and frontend
 make summarize URL='https://en.wikipedia.org/wiki/Java_(programming_language)'
 
 make dashboards                 # Brewlet (8088), jlib-inspector (3000), OpenTelemetry (18888), front-end (8080)
@@ -123,14 +134,16 @@ make dashboards                 # Brewlet (8088), jlib-inspector (3000), OpenTel
 ```text
 agents/<name>/     one agent: agent.env, deployment.yaml, launch.json, layers, build.sh, sources, README.md
 agents/README.md   the contract all agents implement
-apps/<name>/       one app: app.env, deployment.yaml, launch.json, layers, build.sh, smoke.sh, sources, README.md
-apps/README.md     how an app differs from an agent
+agents/wikipedia/  the summarizer, frontend, jlib-server, jlib-ui and their telemetry setup
 runtimes/*.env     the runtime catalog Ops approves (image digest, uid, interpreter)
-runtimes/java-25-jlib/   the Dockerfile of java-25-jlib, the runtime that adds the jlib-inspector agent
-sidecars/          the Copilot CLI sidecar image
-cluster/           the kind cluster configuration; cluster/observability/ holds the Aspire dashboard
+cluster/           the kind cluster configuration
 demo/rotation/     builds the "before the patch" runtime for make rotate
-scripts/           everything the Makefile runs (shell, nothing to install)
+scripts/platform/       set up the cluster, runtimes and credentials
+scripts/workloads/      publish, deploy, inspect and smoke-test an agent or app
+scripts/integrations/   build the language integrations and run Maven against the shared cache
+scripts/demos/          run the runtime rotation example
+scripts/checks/         check host tools (make doctor) and validate the repository (make check)
+scripts/lib/            shared shell helpers sourced by the other scripts
 docs/              the documentation site (mkdocs-material)
 versions.env       every pinned version and digest, in one place
 ```

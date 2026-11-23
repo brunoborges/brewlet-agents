@@ -70,13 +70,18 @@ compiles with `tsc`, runs `npm prune --omit=dev`, then moves `node_modules` to t
 on the host's Node (26) or the runtime's (24); the script fails if a `*.node` file appears. It also deletes
 npm's hidden `node_modules/.package-lock.json`, which would leak the registry's URLs and host paths.
 
-The integration packages are not published. `scripts/integrations/node.sh` (run by `make build`) packs them
+The integration packages are not published. `scripts/integrations/languages/node.sh` (run by `make build`) packs them
 from the pinned `copilot-sdk-integrations` commit into `build/integrations/node/*.tgz`, and `package.json`
 points at them with repository-relative `file:../../build/integrations/node/...`. Direct dependencies are
 pinned exactly and the transitive ones resolve at build time. No `package-lock.json` is committed: a lockfile
 would record this registry mirror's URLs and `build/` outputs. Two from-scratch builds gave the same digest.
 
 ## Run it
+
+After `make up` from the repository root, run `make run` **in this directory** to build, publish,
+deploy and smoke-test this agent. Use `./build.sh` to build just the artifact.
+
+From the repository root:
 
 ```bash
 make agent AGENT=node-fastify     # build, publish, deploy, smoke
@@ -87,8 +92,7 @@ make ask AGENT=node-fastify Q="Which language runtime are you on and where is it
 The container listens 0.15-0.3 s after it starts; the Pod is Ready about 4 s after it is scheduled. Measured on
 the kind node (`crictl stats`, working set): the agent holds 38 MB on a fresh Pod and 44-92 MB after a few
 questions (the working set counts file cache the kernel can reclaim; the RSS stays near 35 MB), and peaked at 74 MB with
-16 concurrent questions and 93 MB with 32. The sidecar holds 17 MB idle, 27-136 MB after a few questions and
-peaked at 183 MB (16 at once) and 291 MB (32 at once). Hence `100m` and `96Mi` requests and a `192Mi` limit.
+16 concurrent questions and 93 MB with 32. Hence `100m` and `96Mi` requests and a `192Mi` limit.
 
 ## Gotchas
 

@@ -14,7 +14,7 @@ Three pieces, three owners, and nothing shared between them except the contract:
 |-------|-------|----------|--------------|
 | **Runtime** | Ops | `java-25`, `node-24`, `python-3.13` or `dotnet-10`: a plain language image, pinned by digest. **No framework, no Copilot SDK.** | Ops patches the language runtime (a JDK security update, a new Node.js 24 patch). |
 | **Application artifact** | Developers | The agent's code, **all** of its dependencies (Copilot SDK, framework integration, framework) and a Brewlet `launch.json`. Nothing else. | The agent's code or libraries change. |
-| **Copilot CLI sidecar** | Platform | One image, `copilot-cli`, in every Pod. Headless on loopback, token-protected, the only holder of GitHub credentials. | The CLI releases a new version. |
+| **Copilot CLI sidecar** | Platform | One image, GitHub's `ghcr.io/github/copilot-cli`, in every Pod. Headless on loopback, token-protected, the only holder of GitHub credentials. | The CLI releases a new version. |
 
 The same shape is used for Java, Node.js, Python and .NET. Only the runtime image and the
 `build.sh` that fills the artifact differ.
@@ -54,8 +54,8 @@ and a shared connection token.
 
 ### 3. One Copilot CLI service for the whole cluster
 
-A single shared CLI would use less memory than eight copies. In the current `make footprint` snapshot
-after one request, each sidecar used 36–47 MiB (see the [measured agent footprints](agents/index.md#a-measured-snapshot)).
+A single shared CLI would use less memory than eight copies: each sidecar holds about 150 MiB before its first
+request (see the [measured agent footprints](agents/index.md#a-measured-snapshot)).
 It also makes one process the holder of credentials for every team's conversations, over a network
 connection that needs its own authentication, and it couples every agent's availability to it. The
 sidecar keeps the trust boundary at the Pod, which is the unit Kubernetes already isolates.
@@ -66,12 +66,12 @@ sidecar keeps the trust boundary at the Pod, which is the unit Kubernetes alread
   Jackson, Netty or `node_modules` lives under `/app`, so it needs an artifact rebuild. The split
   makes this boundary visible rather than removing it.
 * **Every Pod carries a CLI.** Eight agents are eight CLI processes. That is the price of the
-  Pod-level trust boundary; in the current snapshot each sidecar used 36–47 MiB after one request.
+  Pod-level trust boundary; each sidecar holds about 150 MiB before its first request.
 * **The CLI version is the platform's choice.** An agent cannot pin its own, and the SDK and CLI have
   to stay compatible. `/runtime` reports the CLI's version and protocol so a mismatch is visible.
 * **The integrations are built from a commit.** `brunoborges/copilot-sdk-integrations` is not
   published to package registries yet, so `INTEGRATIONS_SHA` in `versions.env` pins one commit and
-  `scripts/integrations-build.sh` builds it locally. Moving to published packages later changes how
+  `scripts/integrations/build.sh` builds it locally. Moving to published packages later changes how
   each agent's `build.sh` obtains the integrations, and nothing about what is deployed.
 
 ## Why a "Runtime Concierge"
@@ -82,7 +82,7 @@ process, so asking it "which JDK are you on, and where is your code?" is a demon
 claim. It also exercises everything a real agent needs (a system prompt as a file resource, a custom
 tool, sessions, external configuration, health checks) without an application domain that would
 distract from the platform. The [contract](contract.md) is identical for every framework, and
-`scripts/agent-smoke.sh` is its executable form.
+`scripts/workloads/smoke.sh` is its executable form.
 
 ## Why kind, and what is not in scope
 

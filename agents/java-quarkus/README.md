@@ -46,11 +46,16 @@ The first two have no defaults on purpose: the Pod must provide both or the proc
 
 ## Build notes
 
-`build.sh` runs `scripts/mvn.sh -f pom.xml clean package` (Quarkus fast-jar, `--release 25` like the runtime's JDK) and stages `target/quarkus-app/lib` as the `deps` layer and everything else as the `code` layer (`layers`: `deps:/app/lib`, then `code:/app`). `quarkus-run.jar` finds its libraries through a manifest `Class-Path` relative to itself, so nothing needs repackaging, and a code-only change rebuilds a 558 KiB layer.
+`build.sh` runs `scripts/integrations/mvn.sh -f pom.xml clean package` (Quarkus fast-jar, `--release 25` like the runtime's JDK) and stages `target/quarkus-app/lib` as the `deps` layer and everything else as the `code` layer (`layers`: `deps:/app/lib`, then `code:/app`). `quarkus-run.jar` finds its libraries through a manifest `Class-Path` relative to itself, so nothing needs repackaging, and a code-only change rebuilds a 558 KiB layer.
 
 All dependencies are plain Java, so the jars are the same for `linux/arm64` and `linux/amd64`; brotli4j was the one exception (see Gotchas) and `build.sh` fails if a jar for the build host's OS ever reaches the artifact. The platform BOM, 3.40.1, is the Quarkus release the extension is built and tested against. The SDK's `CopilotToolProcessor` generates the `@CopilotTool` metadata and is named in `maven-compiler-plugin`, as the extension's README asks. A from-scratch `make agent` takes about 27 s end to end (Maven 7 s; the rest is publish, rollout and the smoke test). The build is reproducible: the same sources give the same bytes, so a rebuild yields the same artifact digest and a code-only change pushes only the 558 KiB `code` layer.
 
 ## Run it
+
+After `make up` from the repository root, run `make run` **in this directory** to build, publish,
+deploy and smoke-test this agent. Use `./build.sh` to build just the artifact.
+
+From the repository root:
 
 ```bash
 make agent AGENT=java-quarkus
@@ -60,7 +65,7 @@ kubectl -n agents port-forward deploy/java-quarkus 18101:8080 &
 curl -s localhost:18101/ask -H 'content-type: application/json' -d '{"question":"Which JDK are you on?","conversationId":"demo"}'
 ```
 
-Measured on the local kind cluster (arm64): startup 0.6 s (`started in 0.622s`). Agent working set: 98 MB idle, 134 MB after the first answer, 141 MB after 20 parallel conversations (cgroup peak 186 MiB, of which about 50 MiB is reclaimable page cache). Copilot CLI sidecar: 17 MB idle, 39 MB after the first answer, about 190 MB with 20 conversations (roughly 7 MB each). Resources in [`deployment.yaml`](deployment.yaml): request 100m CPU and 160Mi, limit 320Mi (the heap may use 70% of it); the burst caused no OOM kill and no restart.
+Measured on the local kind cluster (arm64): startup 0.6 s (`started in 0.622s`). Agent working set: 98 MB idle, 134 MB after the first answer, 141 MB after 20 parallel conversations (cgroup peak 186 MiB, of which about 50 MiB is reclaimable page cache). Resources in [`deployment.yaml`](deployment.yaml): request 100m CPU and 160Mi, limit 320Mi (the heap may use 70% of it); the burst caused no OOM kill and no restart.
 
 ## Gotchas
 

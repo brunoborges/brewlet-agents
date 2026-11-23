@@ -24,7 +24,6 @@ Measured on the kind cluster; [`deployment.yaml`](deployment.yaml) asks for 100m
 | working set | fresh Pod | after one ask | 12 asks at once |
 | --- | --- | --- | --- |
 | agent | 96-103 MiB | 96 MiB | 98 MiB |
-| Copilot CLI sidecar (limit 512Mi) | 16-19 MiB | 107 MiB | 187 MiB |
 
 The Pod is Ready about 4 s after it is scheduled (the startup probe polls every 2 s); the server itself answers
 `/readyz` 1.3 s after its container starts. `make build` takes about 27 s: the tree has 3,780 files, twice FastAPI's.
@@ -68,7 +67,7 @@ and `lifespan="off"` (Django's ASGI handler does not speak lifespan). `/runtime`
   <aarch64|x86_64>-manylinux_2_28 --only-binary :all: --target site-packages -r requirements.txt <wheels>`. The runtime
   has no compiler and no pip, so only binary wheels qualify. `pydantic_core` is the one compiled dependency: an
   `ARCH=amd64` build differs only in that file (5.1 MiB, not 4.7) and runs in the runtime image as amd64.
-* The integrations are not on PyPI. `scripts/integrations/python.sh` (run by `make build`) builds wheels of
+* The integrations are not on PyPI. `scripts/integrations/languages/python.sh` (run by `make build`) builds wheels of
   `copilot-agent-core` and `copilot-django` from the pinned `copilot-sdk-integrations` commit into
   `build/integrations/python/`; [`requirements.txt`](requirements.txt) pins everything else exactly.
 * Two layers ([`layers`](layers)): the libraries, then the project, so a code change ships 20 KiB instead of 13.4 MiB;
@@ -83,6 +82,11 @@ and `lifespan="off"` (Django's ASGI handler does not speak lifespan). `/runtime`
   so none is ever opened; keep them if you turn it on. `django/conf/locale` is code Django imports, so it stays.
 
 ## Run it
+
+After `make up` from the repository root, run `make run` **in this directory** to build, publish,
+deploy and smoke-test this agent. Use `./build.sh` to build just the artifact.
+
+From the repository root:
 
 ```bash
 make agent AGENT=python-django      # build, publish, deploy, smoke test (make auth for the /ask checks)

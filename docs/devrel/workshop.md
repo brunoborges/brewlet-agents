@@ -116,9 +116,9 @@ environment variable:
   runtimeClassName  brewlet
   runtime (Ops)     java-25  (generation 1, image sha256:e84386716537)
   artifact (dev)    localhost:5001/agents/java-spring@sha256:86643a3e65fe034550ce9eda6d3d96b9cca16a0d22fa3dba10afb97084fd9d49
-  sidecar           localhost:5001/copilot-cli@sha256:05b45eddba3c155fd877d79b5cebb172e7c7e2a2876d368293e92ad11c6fb262
+  sidecar           ghcr.io/github/copilot-cli:1.0.114@sha256:5083f9892836b4d1cc975386b0fbe9ded2658f22ae43f81c0a36fe917f85b1a9
   environment variables, by container (names only):
-    copilot-cli  COPILOT_CONNECTION_TOKEN COPILOT_GITHUB_TOKEN
+    copilot-cli  COPILOT_CONNECTION_TOKEN COPILOT_GITHUB_TOKEN HOME
     agent        PORT AGENT_NAME AGENT_RUNTIME_ID COPILOT_CLI_URL COPILOT_CONNECTION_TOKEN POD_NAME POD_NAMESPACE NODE_NAME
 
  ok the GitHub token (COPILOT_GITHUB_TOKEN) is injected into: copilot-cli

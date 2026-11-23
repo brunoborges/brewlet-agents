@@ -88,7 +88,7 @@ nav:
           - Django: agents/python-django.md
       - .NET:
           - ASP.NET Core: agents/dotnet-aspnet.md
-  - Apps:
+  - Wikipedia example:
       - Overview: apps/index.md
       - Wikipedia summarizer: apps/wikipedia-summarizer.md
       - Wikipedia front-end: apps/wikipedia-frontend.md

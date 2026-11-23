@@ -1,0 +1,137 @@
+# jlib-ui on Kubernetes: the complete deployment, readable top to bottom.
+#
+# `make deploy APP=jlib-ui` applies this file as written, except that it replaces the `image:` line
+# with the digest that `make publish` pushed (scripts/workloads/pin.sh). Brewlet runs only digest-pinned
+# application images, which is why the file names the tag.
+#
+# One container: the application artifact (code + node_modules + launch.json, nothing else). Brewlet
+# supplies Node.js 24 from the platform-owned runtime named by the annotation below.
+#
+# The dashboard polls the jlib-inspector server (the jlib-server Service) every ten seconds and shows
+# what the instrumented JVMs reported to it. It has no login, it answers any origin, and
+# POST /api/server-config changes the server it polls, so it is meant to be reached through a
+# port-forward (`make dashboards`) and not through an Ingress.
+#
+# Not in this file: the namespace (`make deploy` creates it with Pod Security "restricted").
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jlib-ui
+  namespace: observability
+# The app never calls the Kubernetes API, so it gets no API token.
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jlib-ui
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: jlib-ui
+    app.kubernetes.io/part-of: brewlet-agents
+  annotations:
+    # Ask the Brewlet operator to roll this Deployment when Ops rotates the runtime image.
+    brewlet.sh/restart-on-rotation: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jlib-ui
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jlib-ui
+        app.kubernetes.io/part-of: brewlet-agents
+        brewlet-agents.dev/language: node
+      annotations:
+        # The suffix is the container name: this container runs on the platform-owned runtime.
+        runtime-image.brewlet.sh/app: node-24
+    spec:
+      runtimeClassName: brewlet
+      serviceAccountName: jlib-ui
+      automountServiceAccountToken: false
+      # Service links would inject variables such as JLIB_SERVER_PORT=tcp://... into the app.
+      enableServiceLinks: false
+      # The app is PID 1 and handles SIGINT but not SIGTERM, which PID 1 then ignores. It keeps no
+      # state, so there is nothing to wait for: Kubernetes may stop it after a few seconds.
+      terminationGracePeriodSeconds: 5
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: app
+          image: localhost:5001/apps/jlib-ui:dev
+          ports:
+            - name: http
+              containerPort: 3000
+            # Live updates. The app opens this port itself, on every interface, at a fixed number.
+            - name: ws
+              containerPort: 3001
+          env:
+            - name: PORT
+              value: "3000"
+            # The Service of the jlib-inspector server, in this namespace.
+            - name: JLIB_SERVER_URL
+              value: http://jlib-server:8080
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 192Mi
+          securityContext:
+            # Brewlet's admission fills in the runtime's approved uid/gid; this keeps the manifest
+            # compliant with Pod Security "restricted" before that happens.
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: app-tmp
+              mountPath: /tmp
+          # Healthy means "the dashboard is up", whether or not the server answers: /api/health
+          # reports the server's state in its body but does not fail on it.
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: app-tmp
+          emptyDir:
+            sizeLimit: 16Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jlib-ui
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: jlib-ui
+    app.kubernetes.io/part-of: brewlet-agents
+spec:
+  selector:
+    app.kubernetes.io/name: jlib-ui
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+    # The page opens its WebSocket at ws://localhost:3001, as upstream's client is written, so a
+    # browser needs this port forwarded to the same number as well as 3000.
+    - name: ws
+      port: 3001
+      targetPort: ws
