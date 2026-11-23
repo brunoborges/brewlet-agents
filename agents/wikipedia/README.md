@@ -1,8 +1,23 @@
-# Apps
+# Wikipedia summarizer
 
-The [agents](../agents/README.md) are eight implementations of one contract. An **app** is any other workload that
-runs on a Brewlet runtime: it has a job of its own, no Runtime Concierge contract, and it brings its own
-`app.env`. Four apps ship here:
+Paste a Wikipedia article URL into the frontend and the Spring Boot summarizer returns a summary
+using its Copilot CLI sidecar. This example also shows which jars the summarizer loads: its
+instrumented Java runtime reports them to `jlib-server`, and `jlib-ui` displays the inventory.
+Both services belong to this example; the other agents don't need them.
+
+## Run the example
+
+```bash
+# From the repository root:
+make up                  # shared cluster, runtimes and sidecar
+make auth                # needed to generate summaries, not to deploy
+cd agents/wikipedia
+make run                 # Aspire + jlib services first, then the summarizer and frontend
+make summarize URL='https://en.wikipedia.org/wiki/Java_(programming_language)'
+make dashboards          # open the frontend and dashboards on localhost
+```
+
+## Components
 
 | App | Language | Framework | Runtime | Namespace | What it is |
 | --- | --- | --- | --- | --- | --- |
@@ -12,24 +27,19 @@ runs on a Brewlet runtime: it has a job of its own, no Runtime Concierge contrac
 | [jlib-ui](jlib-ui/README.md) | Node.js 24 | Express | `node-24` | `observability` | The jlib-inspector dashboard. |
 
 The summarizer runs on a runtime that Ops extended with the jlib-inspector agent, and reports to the
-jlib-server and to the Aspire OpenTelemetry dashboard. [Observability and dashboards](../docs/observability.md)
+jlib-server and to the Aspire OpenTelemetry dashboard. [Observability and dashboards](../../docs/observability.md)
 describes that stack and how to open each dashboard, including the Brewlet dashboard.
 
-```bash
-make up                  # the platform: cluster, runtimes, Copilot CLI sidecar
-make observability       # Aspire, jlib-server and jlib-ui
-make auth                # once: your GitHub token for the Copilot CLI sidecar
-make wikipedia           # the summarizer and its front-end
-make summarize URL='https://en.wikipedia.org/wiki/Java_(programming_language)'
-make dashboards          # open the dashboards on localhost
-```
+The derived runtime's [Dockerfile](java-25-jlib/Dockerfile) and the telemetry stack's
+[manifest](observability/otel-dashboard.yaml) live here. Runtime approval and credentials still
+use the shared platform.
 
 ## How an app differs from an agent
 
-| | Agent (`agents/<name>`) | App (`apps/<name>`) |
+| | Agent (`agents/<name>`) | App (`agents/wikipedia/<name>`) |
 | --- | --- | --- |
 | Description | `agent.env` | `app.env` |
-| Contract | The [Runtime Concierge](../agents/README.md): `/healthz`, `/readyz`, `/runtime`, `POST /ask` | None. It has to answer `HEALTH_PATH` with `200` on `SERVICE_PORT`. |
+| Contract | The [Runtime Concierge](../README.md): `/healthz`, `/readyz`, `/runtime`, `POST /ask` | None. It has to answer `HEALTH_PATH` with `200` on `SERVICE_PORT`. |
 | Namespace | `agents` | `NAMESPACE`, `agents` when unset |
 | Container | `agent` | `app` |
 | Copilot CLI sidecar | Always | Only with `SIDECAR=copilot-cli`, and then in the `agents` namespace, where its Secret lives |
@@ -45,7 +55,7 @@ Pod Security Standard. `make check` verifies the manifest of every app.
 ## What is in an app's directory
 
 ```text
-apps/<name>/
+agents/wikipedia/<name>/
   app.env           APP_NAME, LANGUAGE, FRAMEWORK, RUNTIME, and optionally NAMESPACE, SERVICE_PORT, HEALTH_PATH, SIDECAR, INTEGRATIONS
   Makefile          make run: build, publish, deploy and smoke-test this app
   build.sh          directly runnable: stages the app, runs its build checks and packages its Brewlet artifact
@@ -58,7 +68,7 @@ apps/<name>/
 
 | `app.env` key | Meaning |
 | --- | --- |
-| `APP_NAME` | The directory name. Names are unique across `agents/` and `apps/`. |
+| `APP_NAME` | The component directory name. Names are unique across agents and apps. |
 | `LANGUAGE` | `java`, `node`, `python` or `dotnet` |
 | `FRAMEWORK` | Free text, shown by `make list` |
 | `RUNTIME` | The Brewlet runtime id from `runtimes/`, for example `java-25` or `node-24` |
@@ -69,7 +79,7 @@ apps/<name>/
 
 ## Build, run, inspect
 
-The `make` targets that take `AGENT=<name>` take `APP=<name>` as well:
+From the **repository root**, the `make` targets that take `AGENT=<name>` take `APP=<name>` as well:
 
 ```bash
 make build APP=wikipedia-summarizer      # test and package the artifact
@@ -90,7 +100,7 @@ the jlib-inspector server and UI, after it deploys the Aspire dashboard. `make a
 ## Adding an app
 
 1. Copy the closest app, and change `app.env`, `launch.json`, `layers`, `build.sh`, `deployment.yaml` and `smoke.sh`.
-2. Write its `README.md`, add `docs/apps/<name>.md` (a one-line stub, `<!-- source: apps/<name>/README.md -->`, like
+2. Write its `README.md`, add `docs/apps/<name>.md` (a one-line stub, `<!-- source: agents/wikipedia/<name>/README.md -->`, like
    its siblings) and add it to the `nav` of `mkdocs.yml`.
 3. Run `make check`: it needs neither a cluster nor Docker, and it checks the files above, the manifest (name,
    namespace, runtime, health path, Service port, sidecar, hardening, pinned image) and the documentation wiring.

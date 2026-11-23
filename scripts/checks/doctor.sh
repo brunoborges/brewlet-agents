@@ -66,7 +66,7 @@ java -version 2>&1 | sed -n 's/.*version "\([0-9]*\).*/\1/p' | head -n1 | too_ol
 optional node "the Node.js agents and apps (Node 24 or newer)" node --version
 node --version 2>/dev/null | sed -n 's/^v\([0-9]*\).*/\1/p' | too_old node 24 "the Node.js agents and apps"
 optional npm "the Node.js agents and the jlib-inspector dashboard" npm --version
-optional git "the jlib-inspector dashboard (apps/jlib-ui fetches a pinned commit)" git --version
+optional git "the jlib-inspector dashboard (agents/wikipedia/jlib-ui fetches a pinned commit)" git --version
 optional uv "the Python agents (it fetches Python 3.13 and the wheels, so no system Python is needed)" uv --version
 optional dotnet "the .NET agent (.NET 10 SDK)" dotnet --version
 dotnet --version 2>/dev/null | sed -n 's/^\([0-9]*\)\..*/\1/p' | too_old dotnet 10 "the .NET agent"

@@ -6,7 +6,7 @@ application that reports, the jars its JVM loaded, where one library is used in 
 flags, garbage collector, environment variables and system properties it could read.
 
 It is the dashboard for the `java-25-jlib` runtime: any application on it that sets `JLIB_SERVER_URL` appears
-here (see [Observability](../../docs/observability.md#the-java-25-jlib-runtime)). The upstream project is
+here (see [Observability](../../../docs/observability.md#the-java-25-jlib-runtime)). The upstream project is
 experimental, and so is its UI: here it is a development tool on a local cluster.
 
 ## What it does
@@ -64,7 +64,7 @@ Measured on the kind cluster; the Deployment asks for 25m CPU, 64Mi, limit 192Mi
 
 * Host tools: `git`, `node`, `npm` and `jq`, and network access to GitHub and the npm registry.
 * The source is not kept in this repository. [`build.sh`](build.sh) fetches the commit that
-  `JLIB_INSPECTOR_COMMIT` in [`versions.env`](../../versions.env) names, by its hash and not by a tag or a branch,
+  `JLIB_INSPECTOR_COMMIT` in [`versions.env`](../../../versions.env) names, by its hash and not by a tag or a branch,
   checks that what came back is that commit, and starts every build from it with `git clean`, so nothing from an
   earlier build survives. It uses the `frontend/` directory.
 * The run-time packages are installed from a `package.json` made from upstream's (upstream lists its build tools
@@ -72,7 +72,7 @@ Measured on the kind cluster; the Deployment asks for 25m CPU, 64Mi, limit 192Mi
   (`--os=linux --cpu=<x64|arm64> --libc=glibc`), not the host's. The build stops if the artifact contains a
   native addon (`*.node`): the runtime is Node 24 on glibc, and none is expected.
 * **There is no lockfile.** The one upstream ships records the URLs of a private package feed, so the versions
-  float within the ranges upstream's `package.json` declares, as in [`agents/node-fastify`](../../agents/node-fastify/README.md).
+  float within the ranges upstream's `package.json` declares, as in [`agents/node-fastify`](../../node-fastify/README.md).
   Two builds of the same commit can differ in their dependencies.
 
 ## Run it

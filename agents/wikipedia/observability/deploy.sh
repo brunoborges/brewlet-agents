@@ -2,22 +2,22 @@
 # Deploys the observability stack to the kind cluster, in namespace $OBSERVABILITY_NAMESPACE:
 #
 #   aspire-dashboard   the OpenTelemetry dashboard: it receives the OTLP that the jlib-inspector agent
-#                      of the java-25-jlib runtime exports (cluster/observability/otel-dashboard.yaml)
-#   jlib-server        the jlib-inspector server that the agent reports to (apps/jlib-server, java-25)
-#   jlib-ui            the jlib-inspector dashboard (apps/jlib-ui, node-24)
+#                      of the java-25-jlib runtime exports (agents/wikipedia/observability/otel-dashboard.yaml)
+#   jlib-server        the jlib-inspector server that the agent reports to (agents/wikipedia/jlib-server, java-25)
+#   jlib-ui            the jlib-inspector dashboard (agents/wikipedia/jlib-ui, node-24)
 #
-#   scripts/observability/deploy.sh             build, publish and deploy all three
-#   scripts/observability/deploy.sh --manifest  print the OpenTelemetry dashboard's manifest as it is applied
+#   agents/wikipedia/observability/deploy.sh             build, publish and deploy all three
+#   agents/wikipedia/observability/deploy.sh --manifest  print the OpenTelemetry dashboard's manifest as it is applied
 #                                        (the image pinned by digest) and exit; needs no cluster
 #
 # 'make observability' calls this script. 'make dashboards' opens the three UIs and 'make telemetry'
 # checks that data arrives. An application reports to the stack when it runs on the java-25-jlib
 # runtime and its Deployment sets JLIB_SERVER_URL and OTEL_EXPORTER_OTLP_ENDPOINT, as
-# apps/wikipedia-summarizer does. The script is safe to re-run.
+# agents/wikipedia/wikipedia-summarizer does. The script is safe to re-run.
 set -euo pipefail
-source "$(dirname "$0")/../lib/common.sh"
+source "$(dirname "$0")/../../../scripts/lib/common.sh"
 
-manifest="$ROOT/cluster/observability/otel-dashboard.yaml"
+manifest="$ROOT/agents/wikipedia/observability/otel-dashboard.yaml"
 image_repo="${OTEL_DASHBOARD_IMAGE%@*}"
 
 # The manifest names the Aspire image by tag. The digest in versions.env is what runs, so a moved tag
@@ -66,7 +66,7 @@ ok "$OTEL_DASHBOARD is running in namespace $namespace: $OTEL_DASHBOARD_IMAGE"
 
 # The jlib-inspector server first, then its dashboard, which reports the server's status.
 for app in jlib-server jlib-ui; do
-  make --no-print-directory -C "$ROOT/apps/$app" run
+  make --no-print-directory -C "$ROOT/agents/wikipedia/$app" run
 done
 
 ok "the observability stack is running in namespace $namespace"

@@ -1,7 +1,7 @@
 # jlib-server
 
 The data collection server of [jlib-inspector](https://github.com/brunoborges/jlib-inspector), running as an app on
-the plain `java-25` Brewlet runtime. Java applications on the [`java-25-jlib`](../../docs/observability.md#the-java-25-jlib-runtime)
+the plain `java-25` Brewlet runtime. Java applications on the [`java-25-jlib`](../../../docs/observability.md#the-java-25-jlib-runtime)
 runtime report to it which jars their JVM loads; the [jlib-ui](../jlib-ui/README.md) dashboard shows what it
 collected. Together they answer the question jlib-inspector exists for: *which of my applications use this
 library, in which version, right now?*
@@ -52,7 +52,7 @@ launch.json                      launch layer  /usr/jdk/bin/java -XX:MaxRAMPerce
 | whole artifact | 119.4 KiB |
 
 Nothing here is compiled. [`build.sh`](build.sh) downloads `jlib-inspector-server-1.1.0-shaded.jar` from the
-GitHub release `v1.1.0`, compares it with `JLIB_INSPECTOR_SHA256_SERVER` in [`versions.env`](../../versions.env) and
+GitHub release `v1.1.0`, compares it with `JLIB_INSPECTOR_SHA256_SERVER` in [`versions.env`](../../../versions.env) and
 stops on a difference. The download is cached in `build/downloads`, which `make clean` keeps. Moving to another
 release means changing the version and the checksums in that file.
 

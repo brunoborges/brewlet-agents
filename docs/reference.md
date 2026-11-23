@@ -3,7 +3,7 @@
 ## Make targets
 
 `make help` prints this list from the Makefile. `AGENT` is one of the agents and `APP` one of the apps that
-`make list` prints; the per-workload targets take either, because the names are unique across `agents/` and `apps/`.
+`make list` prints; the per-workload targets take either, because each workload has a unique name.
 
 ### The platform, once
 
@@ -79,7 +79,7 @@
 
 ## Scripts
 
-Start in `agents/<name>/` or `apps/<name>/`. Run `./build.sh` to package that example, or
+Start in `agents/<name>/` or `agents/wikipedia/<name>/`. Run `./build.sh` to package that example, or
 `make run` to build, publish, deploy and smoke-test it against the shared platform. The local
 `Makefile` shows the commands in order; the root `make agent` target runs the same recipe.
 
@@ -88,8 +88,8 @@ Start in `agents/<name>/` or `apps/<name>/`. Run `./build.sh` to package that ex
 | `scripts/platform/` | Cluster setup and teardown, runtime approval and rotation, the sidecar and its credentials. |
 | `scripts/integrations/` | Build the pinned Copilot SDK integrations for each language. |
 | `scripts/workloads/` | Publish and verify an artifact, pin and deploy a manifest, and interact with the deployed workload. |
-| `scripts/observability/` | Deploy the telemetry stack, verify telemetry and open the dashboards. |
-| `scripts/demos/` | Run the rotation and Wikipedia summarizer examples. |
+| `agents/wikipedia/observability/` | Deploy the telemetry stack, verify telemetry and open the dashboards. |
+| `scripts/demos/` | Run the runtime rotation example. |
 | `scripts/checks/` | Check the repository and host tools. |
 | `scripts/lib/` | Sourced Bash helpers for artifact packaging, cluster access and HTTP checks. |
 

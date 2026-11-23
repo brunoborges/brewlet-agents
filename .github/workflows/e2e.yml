@@ -70,9 +70,7 @@ jobs:
 
       - name: Deploy the telemetry stack, the Wikipedia summarizer and its front-end
         if: env.RUN_APPS == 'true'
-        run: |
-          make observability
-          make wikipedia
+        run: make -C agents/wikipedia run
 
       - name: Give the Copilot CLI sidecar a GitHub token and run the live checks
         if: env.HAS_COPILOT_TOKEN == 'true'
@@ -99,7 +97,7 @@ jobs:
         if: env.RUN_APPS == 'true'
         run: |
           make telemetry
-          scripts/observability/dashboards.sh --check
+          agents/wikipedia/observability/dashboards.sh --check
 
       - name: Rotate the java-25 runtime and watch the Java agents follow
         if: inputs.rotation

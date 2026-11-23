@@ -21,7 +21,7 @@ these is reachable from outside your machine.
 ```bash
 make dashboards                          # every dashboard that is deployed
 make dashboards DASHBOARDS="jlib otel"   # only these: brewlet, jlib, otel, frontend
-scripts/observability/dashboards.sh --check            # opens each one, requests its pages once, closes it again
+agents/wikipedia/observability/dashboards.sh --check            # opens each one, requests its pages once, closes it again
 ```
 
 The ports are fixed, because the jlib-inspector page connects to `ws://localhost:3001` on its own and needs 3000
@@ -78,7 +78,7 @@ annotations:
 Nothing else differs from `java-25`: the same distroless base, the same JDK, the same user and layout, so the id
 keeps the compatibility promise `java-25` makes. [`runtimes/java-25-jlib.env`](https://github.com/brunoborges/brewlet-agents/blob/main/runtimes/java-25-jlib.env)
 registers it (`BASE=java-25`) and
-[`runtimes/java-25-jlib/Dockerfile`](https://github.com/brunoborges/brewlet-agents/blob/main/runtimes/java-25-jlib/Dockerfile)
+[`agents/wikipedia/java-25-jlib/Dockerfile`](https://github.com/brunoborges/brewlet-agents/blob/main/agents/wikipedia/java-25-jlib/Dockerfile)
 builds it:
 
 1. A first stage downloads the agent's shaded jar from the jlib-inspector release `JLIB_INSPECTOR_VERSION`, stops
@@ -161,9 +161,9 @@ the manifest of every app on `java-25-jlib`.
 The [.NET Aspire dashboard](https://learn.microsoft.com/dotnet/aspire/fundamentals/dashboard/overview), running
 standalone as the OTLP endpoint. It is Aspire's own image, pinned by digest in `versions.env`
 (`OTEL_DASHBOARD_IMAGE`), as an ordinary container: Brewlet is for applications on a platform-owned runtime, and
-this one ships with its own. [`cluster/observability/otel-dashboard.yaml`](https://github.com/brunoborges/brewlet-agents/blob/main/cluster/observability/otel-dashboard.yaml)
-names the image by tag, and `scripts/observability/deploy.sh` substitutes the pinned digest when it applies the manifest
-(`scripts/observability/deploy.sh --manifest` prints what is applied), so a moved tag cannot change what runs.
+this one ships with its own. [`agents/wikipedia/observability/otel-dashboard.yaml`](https://github.com/brunoborges/brewlet-agents/blob/main/agents/wikipedia/observability/otel-dashboard.yaml)
+names the image by tag, and `agents/wikipedia/observability/deploy.sh` substitutes the pinned digest when it applies the manifest
+(`agents/wikipedia/observability/deploy.sh --manifest` prints what is applied), so a moved tag cannot change what runs.
 
 | Port | Service | What it is |
 | --- | --- | --- |

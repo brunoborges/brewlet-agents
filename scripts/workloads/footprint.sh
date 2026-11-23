@@ -15,7 +15,7 @@ node="${CLUSTER_NAME}-control-plane"
 
 workloads="$*"
 if [ -z "$workloads" ]; then
-  for dir in "$ROOT"/agents/*/ "$ROOT"/apps/*/; do
+  for dir in "$ROOT"/agents/*/ "$ROOT"/agents/wikipedia/*/; do
     dir="${dir%/}"
     [ -f "$(workload_env "$dir")" ] || continue
     name="$(basename "$dir")"

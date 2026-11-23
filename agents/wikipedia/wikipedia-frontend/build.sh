@@ -2,7 +2,7 @@
 # Build the wikipedia-frontend Brewlet artifact using the layers and launch.json in this directory.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$HERE/../../scripts/lib/artifact.sh"
+source "$HERE/../../../scripts/lib/artifact.sh"
 prepare_artifact "$HERE"
 need node
 

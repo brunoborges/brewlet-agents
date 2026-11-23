@@ -3,7 +3,7 @@
 #
 #   scripts/workloads/smoke.sh <agent>
 #
-# An app (apps/<name>) has no such contract, so this hands it to scripts/workloads/app-smoke.sh.
+# An app (agents/wikipedia/<name>) has no such contract, so this hands it to scripts/workloads/app-smoke.sh.
 #
 # It verifies the Runtime Concierge contract (agents/README.md) and prints the proof that matters
 # for the demo: the app lives under /app, the language runtime lives somewhere else, and the Copilot

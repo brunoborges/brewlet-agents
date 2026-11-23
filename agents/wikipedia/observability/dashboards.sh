@@ -7,9 +7,9 @@
 #   otel       http://127.0.0.1:18888   OpenTelemetry (Aspire): the OTLP the jlib-inspector agents export
 #   frontend   http://127.0.0.1:8080    the Wikipedia summarizer's Node.js front-end
 #
-#   scripts/observability/dashboards.sh                       every dashboard that is deployed
-#   scripts/observability/dashboards.sh jlib otel             only these
-#   scripts/observability/dashboards.sh --check [name...]     open them, request each page once, close them again
+#   agents/wikipedia/observability/dashboards.sh                       every dashboard that is deployed
+#   agents/wikipedia/observability/dashboards.sh jlib otel             only these
+#   agents/wikipedia/observability/dashboards.sh --check [name...]     open them, request each page once, close them again
 #
 # 'make dashboards' calls this script. The ports are fixed because the jlib dashboard's page connects
 # to ws://localhost:3001 on its own (it needs 3000 and 3001 at the same numbers locally).
@@ -20,8 +20,8 @@
 # dashboard and the front-end have no sign-in at all: they are reachable only from this machine,
 # through the port-forward, and are not meant for anything else.
 set -euo pipefail
-source "$(dirname "$0")/../lib/common.sh"
-source "$(dirname "$0")/../lib/smoke.sh"
+source "$(dirname "$0")/../../../scripts/lib/common.sh"
+source "$(dirname "$0")/../../../scripts/lib/smoke.sh"
 need kubectl curl jq
 
 check=0

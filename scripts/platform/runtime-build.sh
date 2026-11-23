@@ -4,7 +4,7 @@
 #   scripts/platform/runtime-build.sh <runtime-id>
 #
 # A derived runtime is a runtimes/<id>.env with BASE=<runtime id> and CONTEXT=<directory>: the approved
-# image of BASE with whatever the Dockerfile in CONTEXT lays over it. runtimes/java-25-jlib is java-25
+# image of BASE with whatever the Dockerfile in CONTEXT lays over it. The java-25-jlib runtime is java-25
 # plus the jlib-inspector agent. Its digest exists only once this script has built and pushed it, so
 # nothing derived can be pinned in git: the digest is printed on stdout, recorded in
 # build/runtimes/<id>/image, and scripts/platform/runtime-register.sh approves exactly that.

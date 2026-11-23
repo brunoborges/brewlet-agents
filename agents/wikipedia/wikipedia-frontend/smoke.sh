@@ -2,14 +2,14 @@
 # The wikipedia-frontend's own checks, run by scripts/workloads/app-smoke.sh against the deployed Service. They
 # also work by hand against any instance:
 #
-#   apps/wikipedia-frontend/smoke.sh http://localhost:3000
+#   agents/wikipedia/wikipedia-frontend/smoke.sh http://localhost:3000
 #
 # The front-end only relays to the wikipedia-summarizer, so these checks prove the wiring between
 # the two. The last one summarizes a real article through both; without credentials it expects the
 # documented 503, unless REQUIRE_AUTH=1 makes the credentials mandatory.
 set -euo pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib/common.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib/smoke.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../../scripts/lib/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../../scripts/lib/smoke.sh"
 need curl jq
 
 base="${1:-}"

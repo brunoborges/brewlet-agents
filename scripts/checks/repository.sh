@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Static checks that need neither a cluster nor Docker. They guard the contract every agent and app
-# shares (agents/README.md, apps/README.md), the Ops runtime catalog, each workload's
+# shares (agents/README.md, agents/wikipedia/README.md), the Ops runtime catalog, each workload's
 # deployment.yaml, the telemetry stack's manifest, the documentation wiring and the scripts
 # themselves. CI runs them on every push.
 #
@@ -218,7 +218,7 @@ done
 [ "$count" -gt 0 ] || fail "no agents found under agents/"
 
 # --- the apps ------------------------------------------------------------------------------------
-# An app is any other workload on a Brewlet runtime (apps/<name>/app.env, apps/README.md): no Runtime
+# An app is any other workload on a Brewlet runtime (agents/wikipedia/<name>/app.env, agents/wikipedia/README.md): no Runtime
 # Concierge contract, a container called "app", and a namespace of its own choosing. Its name is
 # unique across agents and apps. The apps that run on the java-25-jlib runtime report to the
 # telemetry stack, so their manifests have to name where it is. That agent also reports the whole
@@ -226,10 +226,10 @@ done
 # keys it needs as files.
 log "apps"
 jlib_runtime=java-25-jlib
-jlib_url="http://jlib-server.$OBSERVABILITY_NAMESPACE.svc:$(env_value apps/jlib-server/app.env SERVICE_PORT)"
+jlib_url="http://jlib-server.$OBSERVABILITY_NAMESPACE.svc:$(env_value agents/wikipedia/jlib-server/app.env SERVICE_PORT)"
 otlp_url="http://$OTEL_DASHBOARD.$OBSERVABILITY_NAMESPACE.svc:18890"
 app_count=0
-for env_file in apps/*/app.env; do
+for env_file in agents/wikipedia/*/app.env; do
   [ -f "$env_file" ] || continue
   dir="$(dirname "$env_file")"
   name="$(basename "$dir")"
@@ -347,15 +347,15 @@ for env_file in apps/*/app.env; do
 
   [ "$failures" -gt "$bad" ] || ok "$name"
 done
-[ "$app_count" -gt 0 ] || fail "no apps found under apps/"
+[ "$app_count" -gt 0 ] || fail "no components found under agents/wikipedia/"
 
 # --- the telemetry stack -------------------------------------------------------------------------
-# The OpenTelemetry dashboard (cluster/observability/otel-dashboard.yaml) is not on a Brewlet runtime;
-# it is an ordinary container, pinned by the digest in versions.env the way scripts/observability/deploy.sh
+# The OpenTelemetry dashboard (agents/wikipedia/observability/otel-dashboard.yaml) is not on a Brewlet runtime;
+# it is an ordinary container, pinned by the digest in versions.env the way agents/wikipedia/observability/deploy.sh
 # applies it. The apps that report to it name its Service, so this is where that name is defined.
 log "observability"
 bad=$failures
-if manifest="$(scripts/observability/deploy.sh --manifest 2>&1)"; then
+if manifest="$(agents/wikipedia/observability/deploy.sh --manifest 2>&1)"; then
   if json="$(yaml_to_json <<<"$manifest" 2>&1)"; then
     jq -e --arg name "$OTEL_DASHBOARD" --arg ns "$OBSERVABILITY_NAMESPACE" --arg image "$OTEL_DASHBOARD_IMAGE" "$hardened_jq"'
         def env_of($c): (($c.env // []) | map({(.name): (.value // .valueFrom)}) | add) // {};
@@ -382,7 +382,7 @@ if manifest="$(scripts/observability/deploy.sh --manifest 2>&1)"; then
   elif [ $? -eq 127 ]; then
     warn "no Ruby or PyYAML to parse the OpenTelemetry dashboard's manifest; skipped"
   else
-    fail "cluster/observability/otel-dashboard.yaml is not valid YAML: $json"
+    fail "agents/wikipedia/observability/otel-dashboard.yaml is not valid YAML: $json"
   fi
 else
   fail "the OpenTelemetry dashboard's manifest cannot be pinned: $manifest"
@@ -402,14 +402,14 @@ if [ -f mkdocs.yml ]; then
     fi
     grep -q "agents/$name.md" mkdocs.yml || fail "$name: not in the mkdocs.yml nav"
   done
-  for env_file in apps/*/app.env; do
+  for env_file in agents/wikipedia/*/app.env; do
     [ -f "$env_file" ] || continue
     name="$(basename "$(dirname "$env_file")")"
     stub="docs/apps/$name.md"
     if [ ! -f "$stub" ]; then
-      fail "$name: $stub is missing (copy a sibling stub: the hook fills it from apps/$name/README.md)"
+      fail "$name: $stub is missing (copy a sibling stub: the hook fills it from agents/wikipedia/$name/README.md)"
     else
-      grep -q "source: apps/$name/README.md" "$stub" || fail "$stub: missing the 'source: apps/$name/README.md' marker"
+      grep -q "source: agents/wikipedia/$name/README.md" "$stub" || fail "$stub: missing the 'source: agents/wikipedia/$name/README.md' marker"
     fi
     grep -q "apps/$name.md" mkdocs.yml || fail "$name: not in the mkdocs.yml nav"
   done

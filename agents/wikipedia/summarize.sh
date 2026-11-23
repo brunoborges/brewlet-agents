@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Summarizes a Wikipedia article through the REST API of the deployed wikipedia-summarizer.
 #
-#   scripts/demos/summarize.sh <wikipedia-article-url>
-#   scripts/demos/summarize.sh --frontend <wikipedia-article-url>   the same request through the Node.js front-end
-#   scripts/demos/summarize.sh --json <wikipedia-article-url>       print the raw JSON response
+#   agents/wikipedia/summarize.sh <wikipedia-article-url>
+#   agents/wikipedia/summarize.sh --frontend <wikipedia-article-url>   the same request through the Node.js front-end
+#   agents/wikipedia/summarize.sh --json <wikipedia-article-url>       print the raw JSON response
 #
 # 'make summarize URL=...' calls this script. The model call needs GitHub credentials in the cluster
 # ('make auth').
 set -euo pipefail
-source "$(dirname "$0")/../lib/common.sh"
+source "$(dirname "$0")/../../scripts/lib/common.sh"
 need kubectl curl jq
 
 service=wikipedia-summarizer

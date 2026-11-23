@@ -2,7 +2,7 @@
 # Shows that telemetry from the applications reached both observability back ends, by reading it back
 # from each of them. An environment variable or an available collector proves nothing about export.
 #
-#   scripts/observability/telemetry-check.sh
+#   agents/wikipedia/observability/telemetry-check.sh
 #
 #   1. jlib-server:       the applications that reported, with the number of jars each one loaded
 #   2. aspire-dashboard:  the resources that exported OTLP, with the number of package.info log
@@ -18,7 +18,7 @@
 # some, and the Kubernetes probes are not traced.
 # 'make telemetry' calls it.
 set -euo pipefail
-source "$(dirname "$0")/../lib/common.sh"
+source "$(dirname "$0")/../../../scripts/lib/common.sh"
 need kubectl curl jq
 [ -f "$KUBECONFIG" ] || die "no cluster: run 'make cluster' first"
 
@@ -50,7 +50,7 @@ printf '%s' "$apps" | jq -r '.applications[]
   | "  \(.appId[0:12])  \(.jarCount) jars  \(.jdkVendor) \(.jdkVersion)  \(if .name == "" then "(unnamed)" else .name end)  \(.commandLine | .[0:70])"' >&2
 
 # --- 2. the OpenTelemetry dashboard ------------------------------------------------------------------
-# Its telemetry API answers to the key that scripts/observability/deploy.sh generated, which goes to curl on
+# Its telemetry API answers to the key that agents/wikipedia/observability/deploy.sh generated, which goes to curl on
 # stdin (-H @-) and so never appears in a process list.
 forward_start "$namespace" "$OTEL_DASHBOARD" 18888
 base="http://127.0.0.1:$FORWARD_PORT"

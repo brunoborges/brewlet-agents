@@ -24,7 +24,7 @@ built from a pinned commit (see [Design](../design.md)). Under each of them sits
 language, which talks to the Copilot CLI sidecar and never bundles it.
 
 Workloads that are not Concierges, such as the [Wikipedia summarizer](../apps/wikipedia-summarizer.md), live in
-`apps/` and are described in [Apps](../apps/index.md). They use the same runtimes, scripts and Pod hardening, and
+`agents/wikipedia/` and are described in the [Wikipedia example](../apps/index.md). They use the same runtimes, scripts and Pod hardening, and
 none of this contract.
 
 ## What is the same

@@ -2,7 +2,7 @@
 # Build the wikipedia-summarizer Brewlet artifact using the layers and launch.json in this directory.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$HERE/../../scripts/lib/artifact.sh"
+source "$HERE/../../../scripts/lib/artifact.sh"
 prepare_artifact "$HERE"
 
 # The unit tests run as part of the build; they need no network and no Copilot CLI.

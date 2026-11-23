@@ -5,10 +5,10 @@ text from Wikipedia and has Copilot write a short summary with key points. The o
 is no page of its own (the Node.js [front-end](../wikipedia-frontend/README.md) is a separate app in front of it).
 
 It is Spring Boot 4 on Java 25 with the `copilot-spring-boot-starter`, the same stack as the
-[`java-spring`](../../agents/java-spring/README.md) agent, and it runs in a Pod with the same Copilot CLI sidecar.
+[`java-spring`](../../java-spring/README.md) agent, and it runs in a Pod with the same Copilot CLI sidecar.
 The one difference in the platform is the runtime: it selects
-[`java-25-jlib`](../../docs/observability.md#the-java-25-jlib-runtime), `java-25` plus the jlib-inspector agent, so
-the jars it loads show up in the [observability](../../docs/observability.md) stack.
+[`java-25-jlib`](../../../docs/observability.md#the-java-25-jlib-runtime), `java-25` plus the jlib-inspector agent, so
+the jars it loads show up in the [observability](../../../docs/observability.md) stack.
 
 ## The API
 
@@ -152,7 +152,7 @@ and an environment variable overrides each of them, except the connection token,
 The app exports its own **traces** and **metrics** over OTLP, through Spring Boot's OpenTelemetry starter
 (`spring-boot-starter-opentelemetry`), next to the log events that the jlib-inspector agent of the runtime exports
 for the jars it loads. All three arrive on one resource, `wikipedia-summarizer`, in the Aspire dashboard
-([what each tab shows](../../docs/observability.md#traces-and-metrics-from-the-application)).
+([what each tab shows](../../../docs/observability.md#traces-and-metrics-from-the-application)).
 
 * **One trace per request:** `http post /api/summaries`, with `fetch article` and `ask model` under it, and the
   Copilot starter's own `copilot.agent.invocation` under `ask model`. `SummaryService` records the first two as

@@ -174,7 +174,7 @@ has to restart the agents, and Brewlet makes that an explicit opt-in on two leve
 | Opt-in | Where | Set by |
 |--------|-------|--------|
 | `operator.rotationRestarts.enabled=true` (and, optionally, `namespaces`) | The Helm release of Brewlet | `scripts/platform/cluster-up.sh`, for the `agents` and `observability` namespaces |
-| `brewlet.sh/restart-on-rotation: "true"` | The metadata of the **Deployment** | each `agents/<name>/deployment.yaml` and `apps/<name>/deployment.yaml`, so every agent and app has it |
+| `brewlet.sh/restart-on-rotation: "true"` | The metadata of the **Deployment** | each `agents/<name>/deployment.yaml` and `agents/wikipedia/<name>/deployment.yaml`, so every agent and app has it |
 
 With both set, the operator stamps the new generation on the Pod template of every Deployment that
 runs on the rotated runtime. That is an ordinary template change, so the Deployment's own rollout

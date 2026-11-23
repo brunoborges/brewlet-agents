@@ -7,7 +7,7 @@
 # and the five packages app.js requires. Webpack, Babel and React stay behind in the build tree.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$HERE/../../scripts/lib/artifact.sh"
+source "$HERE/../../../scripts/lib/artifact.sh"
 prepare_artifact "$HERE"
 need git node npm jq
 

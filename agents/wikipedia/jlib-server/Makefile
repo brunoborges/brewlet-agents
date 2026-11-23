@@ -1,5 +1,5 @@
 WORKLOAD := $(shell basename "$(CURDIR)")
-SCRIPTS := ../../scripts/workloads
+SCRIPTS := ../../../scripts/workloads
 
 .PHONY: build publish deploy smoke run
 .NOTPARALLEL:

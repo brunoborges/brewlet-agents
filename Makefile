@@ -2,13 +2,14 @@ SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := help
 
 # Every directory under agents/ with an agent.env is an agent: a Runtime Concierge in one framework.
-# Every directory under apps/ with an app.env is an app: a workload that runs on a Brewlet runtime
+# Each Wikipedia component with an app.env is an app: a workload that runs on a Brewlet runtime
 # the same way, without being a Concierge. The per-workload targets take either one as AGENT=<name>
 # or APP=<name>.
 AGENTS := $(sort $(patsubst agents/%/agent.env,%,$(wildcard agents/*/agent.env)))
-APPS := $(sort $(patsubst apps/%/app.env,%,$(wildcard apps/*/app.env)))
+WIKIPEDIA := agents/wikipedia
+APPS := $(sort $(patsubst $(WIKIPEDIA)/%/app.env,%,$(wildcard $(WIKIPEDIA)/*/app.env)))
 AGENT ?= $(APP)
-EXAMPLE_DIR := $(strip $(addprefix agents/,$(filter $(AGENTS),$(AGENT))) $(addprefix apps/,$(filter $(APPS),$(AGENT))))
+EXAMPLE_DIR := $(strip $(addprefix agents/,$(filter $(AGENTS),$(AGENT))) $(addprefix $(WIKIPEDIA)/,$(filter $(APPS),$(AGENT))))
 
 # The documentation site builds with mkdocs when it is installed, and in this image otherwise.
 MKDOCS_IMAGE := squidfunk/mkdocs-material:$(shell sed -n 's/^MKDOCS_MATERIAL_VERSION=//p' versions.env)
@@ -35,7 +36,7 @@ list: ## List the example agents and apps, their language and the runtime they r
 	  printf '%-22s %-6s %-8s %-18s %s\n' "$$a" agent "$$(sed -n 's/^LANGUAGE=//p' $$f)" "$$(sed -n 's/^FRAMEWORK=//p' $$f)" "$$(sed -n 's/^RUNTIME=//p' $$f)"; \
 	done
 	@for a in $(APPS); do \
-	  f=apps/$$a/app.env; \
+	  f=$(WIKIPEDIA)/$$a/app.env; \
 	  printf '%-22s %-6s %-8s %-18s %s\n' "$$a" app "$$(sed -n 's/^LANGUAGE=//p' $$f)" "$$(sed -n 's/^FRAMEWORK=//p' $$f)" "$$(sed -n 's/^RUNTIME=//p' $$f)"; \
 	done
 
@@ -93,26 +94,26 @@ inspect: check-agent ## Show how AGENT's Pod is put together: runtime, artifact,
 
 # --- All agents ----------------------------------------------------------------------------------
 build-all: ## Build and publish every agent and app (no cluster deployment)
-	@for dir in $(addprefix agents/,$(AGENTS)) $(addprefix apps/,$(APPS)); do $(MAKE) --no-print-directory -C "$$dir" build publish || exit 1; done
+	@for dir in $(addprefix agents/,$(AGENTS)) $(addprefix $(WIKIPEDIA)/,$(APPS)); do $(MAKE) --no-print-directory -C "$$dir" build publish || exit 1; done
 
 agents: ## Build, publish, deploy and smoke-test every agent, one after the other
 	@for a in $(AGENTS); do $(MAKE) --no-print-directory agent AGENT=$$a || exit 1; done
 
 # --- The Wikipedia summarizer and the telemetry dashboards ---------------------------------------
 observability: ## Deploy the telemetry stack: the Aspire OpenTelemetry dashboard and the jlib-inspector server and UI
-	@scripts/observability/deploy.sh
+	@$(MAKE) --no-print-directory -C $(WIKIPEDIA) observability
 
 wikipedia: ## Deploy the Wikipedia summarizer (REST API) and its Node.js front-end (needs make up, make observability)
-	@for a in wikipedia-summarizer wikipedia-frontend; do $(MAKE) --no-print-directory agent AGENT=$$a || exit 1; done
+	@$(MAKE) --no-print-directory -C $(WIKIPEDIA) application
 
 summarize: ## Summarize an article: make summarize URL=https://en.wikipedia.org/wiki/Java_(programming_language) [VIA=frontend]
-	@scripts/demos/summarize.sh $(if $(filter frontend,$(VIA)),--frontend) "$$URL"
+	@$(MAKE) --no-print-directory -C $(WIKIPEDIA) summarize
 
 telemetry: ## Check that the Java agent's report, and the apps' logs, traces and metrics, reached jlib-inspector and Aspire
-	@scripts/observability/telemetry-check.sh
+	@$(MAKE) --no-print-directory -C $(WIKIPEDIA) telemetry
 
 dashboards: ## Open the dashboards through port-forwards (all, or DASHBOARDS="brewlet jlib otel frontend") until Ctrl-C
-	@scripts/observability/dashboards.sh $$DASHBOARDS
+	@$(MAKE) --no-print-directory -C $(WIKIPEDIA) dashboards
 
 # --- Credentials and day-2 -----------------------------------------------------------------------
 auth: ## Opt in: give the Copilot CLI sidecar your GitHub token (gh auth token, or COPILOT_GITHUB_TOKEN)

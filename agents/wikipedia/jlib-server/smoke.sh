@@ -2,14 +2,14 @@
 # The jlib-inspector server's own checks, run by scripts/workloads/app-smoke.sh against the deployed Service.
 # They also work by hand against any instance:
 #
-#   apps/jlib-server/smoke.sh http://localhost:8080
+#   agents/wikipedia/jlib-server/smoke.sh http://localhost:8080
 #
 # They only read. The applications that report to the server are whatever happens to be deployed,
 # so these checks do not depend on any of them, and nothing is written that could not be removed
 # again: the server has no way to delete an application.
 set -euo pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib/common.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib/smoke.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../../scripts/lib/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../../scripts/lib/smoke.sh"
 need curl jq
 
 base="${1:-}"

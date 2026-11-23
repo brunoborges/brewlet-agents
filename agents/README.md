@@ -16,8 +16,8 @@ the answer comes from the live process, not from the documentation.
 | `python-django` | Python 3.13 | Django | `python-3.13` |
 | `dotnet-aspnet` | .NET 10 | ASP.NET Core | `dotnet-10` |
 
-Workloads that follow no contract but run on the same runtimes, such as the Wikipedia summarizer and the
-observability stack, are in [`apps/`](../apps/README.md).
+The [Wikipedia example](wikipedia/README.md) runs on the same platform but has its own REST API.
+Its summarizer, frontend and observability services live together under `agents/wikipedia/`.
 
 ## The deployment model
 

@@ -4,7 +4,7 @@
 #   scripts/workloads/app-smoke.sh <app>
 #
 # Every app has to answer HEALTH_PATH (app.env; /healthz by default) with 200 on SERVICE_PORT
-# (app.env; 80 by default). Then the app's own checks run: apps/<app>/smoke.sh <base-url>, if it
+# (app.env; 80 by default). Then the app's own checks run: agents/wikipedia/<app>/smoke.sh <base-url>, if it
 # has one. Set REQUIRE_AUTH=1 to make the checks that need the Copilot CLI's credentials mandatory
 # instead of optional ('make auth' provides them).
 set -euo pipefail

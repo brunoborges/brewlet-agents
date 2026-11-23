@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# HTTP checks shared by scripts/workloads/smoke.sh, scripts/workloads/app-smoke.sh and apps/*/smoke.sh. Source it
+# HTTP checks shared by scripts/workloads/smoke.sh, scripts/workloads/app-smoke.sh and agents/wikipedia/*/smoke.sh. Source it
 # after scripts/lib/common.sh:
 #
 #   base=http://127.0.0.1:8080

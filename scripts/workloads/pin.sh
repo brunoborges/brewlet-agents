@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prints a workload's manifest (<agents|apps>/<name>/deployment.yaml) on stdout with its images pinned.
+# Prints the deployment.yaml from a workload's directory with its images pinned.
 #
 #   scripts/workloads/pin.sh <agent> <artifact-ref> <sidecar-ref>
 #   scripts/workloads/pin.sh <app> <artifact-ref> [<sidecar-ref>]     the sidecar only if the app has one

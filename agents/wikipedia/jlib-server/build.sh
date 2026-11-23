@@ -5,7 +5,7 @@
 # release and checked against the SHA-256 in versions.env before it goes into the artifact.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$HERE/../../scripts/lib/artifact.sh"
+source "$HERE/../../../scripts/lib/artifact.sh"
 prepare_artifact "$HERE"
 need curl openssl
 

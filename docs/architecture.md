@@ -70,7 +70,7 @@ flowchart LR
 | Deploy | `scripts/workloads/deploy.sh` | Applies the agent's own `deployment.yaml`, with its two images pinned to the digests just published, and waits for the rollout. |
 | Verify | `scripts/workloads/smoke.sh` | The checks of the [contract](contract.md), over a port-forward. |
 
-The [apps](apps/index.md) go through the same scripts, from `apps/<name>/`: `build.sh` fills the directory, and
+The [apps](apps/index.md) go through the same scripts, from `agents/wikipedia/<name>/`: `build.sh` fills the directory, and
 `scripts/workloads/app-smoke.sh` replaces the contract checks. An app has the sidecar only when its `app.env` asks for it.
 
 The artifact is just three kinds of file. The `launch.json` is the whole contract with the runtime:
@@ -111,7 +111,7 @@ Running containers keep the generation they started with. A rotation reaches the
 replaced, and replacing them is a decision with two keys: the cluster enables
 `operator.rotationRestarts` (done by `make cluster` for the `agents` and `observability` namespaces only) and each
 Deployment opts in with the `brewlet.sh/restart-on-rotation: "true"` annotation on its own metadata,
-which every `agents/<name>/deployment.yaml` and `apps/<name>/deployment.yaml` sets. The operator then changes nothing but the barrier annotation, and
+which every `agents/<name>/deployment.yaml` and `agents/wikipedia/<name>/deployment.yaml` sets. The operator then changes nothing but the barrier annotation, and
 the Deployment's rollout strategy does the rest. The [rotation demo](rotation.md) runs this end to end
 and shows the artifact digests staying put.
 
@@ -160,6 +160,6 @@ not by the artifact or the Pod, and it reports to two places that the Pod's envi
 | Local registry | a Docker container, `brewlet-agents-registry` | Plain HTTP on the Docker network. Holds artifacts, the sidecar, the `java-25-jlib` runtime and the runtime-rotation demo image. |
 | Brewlet 0.11.0 | Helm chart + node provisioner | Installed by `scripts/platform/cluster-up.sh`; the version is `BREWLET_VERSION` in `versions.env`. The chart's dashboard and metrics Services are enabled. |
 | Runtimes | `runtimes/*.env`, registered by `scripts/platform/runtime-register.sh` | Each pins an image digest, the interpreter path and the user id. |
-| A derived runtime | `runtimes/java-25-jlib/`, built by `scripts/platform/runtime-build.sh` | `java-25` with the jlib-inspector agent. Approved by the digest of the image the build pushed. |
+| A derived runtime | `agents/wikipedia/java-25-jlib/`, built by `scripts/platform/runtime-build.sh` | `java-25` with the jlib-inspector agent. Approved by the digest of the image the build pushed. |
 | Copilot CLI sidecar | `sidecars/copilot-cli` | A distroless image with the checksum-verified CLI release. |
-| Observability stack | `cluster/observability/`, `apps/jlib-server`, `apps/jlib-ui`, deployed by `scripts/observability/deploy.sh` | The Aspire OpenTelemetry dashboard, the jlib-inspector server and its dashboard, in the `observability` namespace. |
+| Observability stack | `agents/wikipedia/observability/`, `agents/wikipedia/jlib-server`, `agents/wikipedia/jlib-ui`, deployed by `agents/wikipedia/observability/deploy.sh` | The Aspire OpenTelemetry dashboard, the jlib-inspector server and its dashboard, in the `observability` namespace. |

@@ -8,7 +8,7 @@ on:
       - mkdocs.yml
       - README.md
       - agents/README.md
-      - agents/*/README.md
+      - agents/**/README.md
       - .github/workflows/pages.yml
   workflow_dispatch:
 

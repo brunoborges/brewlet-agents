@@ -43,20 +43,18 @@ host_arch() {
 }
 
 # A workload is either a Runtime Concierge agent (agents/<name>, settings in agent.env) or an app
-# (apps/<name>, settings in app.env): anything else that runs on a Brewlet runtime. Names are
+# (agents/wikipedia/<name>, settings in app.env): anything else that runs on a Brewlet runtime. Names are
 # unique across both, and the scripts that build, publish and deploy treat them alike.
 #
 # Path of a workload in the repository, with a helpful failure.
 agent_dir() {
-  local d
-  for d in "$ROOT/agents/$1" "$ROOT/apps/$1"; do
-    if [ -d "$d" ]; then echo "$d"; return 0; fi
-  done
+  if [ -f "$ROOT/agents/$1/agent.env" ]; then echo "$ROOT/agents/$1"; return 0; fi
+  if [ -f "$ROOT/agents/wikipedia/$1/app.env" ]; then echo "$ROOT/agents/wikipedia/$1"; return 0; fi
   die "unknown agent or app: $1 (see 'make list')"
 }
 
-# agents or apps: where a workload lives, which is also its build directory and image repository.
-workload_kind() { if [ -d "$ROOT/agents/$1" ]; then echo agents; else echo apps; fi; }
+# Keep build output and image repositories independent of the source layout.
+workload_kind() { if [ -f "$ROOT/agents/$1/agent.env" ]; then echo agents; else echo apps; fi; }
 
 # The file with a workload's settings (the argument is its directory).
 workload_env() { if [ -f "$1/agent.env" ]; then echo "$1/agent.env"; else echo "$1/app.env"; fi; }

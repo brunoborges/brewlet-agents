@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploys a published agent or app to the kind cluster: applies <agents|apps>/<name>/deployment.yaml
+# Deploys a published agent or app to the kind cluster: applies the workload's deployment.yaml
 # with its images pinned to the digests that were just published. An agent is one Pod with the agent
 # container on the Ops-owned runtime and the Copilot CLI sidecar; an app has the sidecar only if its
 # app.env says SIDECAR=copilot-cli, and may run in another namespace (NAMESPACE=...).
