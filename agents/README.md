@@ -73,8 +73,8 @@ executable form of this contract.
 }
 ```
 
-* `agent.location` is under `/app` (the artifact); `language.home` is **not** (the runtime). This
-  is the point of the demo, and the smoke test asserts it.
+* The smoke test checks that `agent.location` is under `/app` (the artifact) and `language.home`
+  is outside `/app` (the runtime).
 * When the sidecar is unreachable `copilot.cli` is `{"endpoint": "...", "attached": false, "error": "..."}`.
 * It never contains the GitHub login, a token or the connection token.
 

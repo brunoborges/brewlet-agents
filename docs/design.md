@@ -1,9 +1,5 @@
 # Design
 
-This page records the decisions behind the project, including the ones that were tried and dropped.
-It is the page to read before you present the project, because the first question you will get is
-"why not just put it all in one image?".
-
 ## The question
 
 Brewlet lets the Ops team own the language runtime. A Copilot agent has more than a language runtime in
@@ -64,7 +60,7 @@ It also makes one process the holder of credentials for every team's conversatio
 connection that needs its own authentication, and it couples every agent's availability to it. The
 sidecar keeps the trust boundary at the Pod, which is the unit Kubernetes already isolates.
 
-## Consequences you should say out loud
+## Operational trade-offs
 
 * **Rotation does not patch what the artifact bundles.** Brewlet rotates the *runtime*. A CVE in
   Jackson, Netty or `node_modules` lives under `/app`, so it needs an artifact rebuild. The split
@@ -90,7 +86,6 @@ distract from the platform. The [contract](contract.md) is identical for every f
 
 ## Why kind, and what is not in scope
 
-`kind` runs on a laptop, which is where demos and workshops happen, and Brewlet supports it. The
-project does not try to be a production reference: there is no ingress, no TLS, no multi-node
-scheduling, and the registry is a plain-HTTP container on the Docker network. What it does take
-seriously is the security posture of the Pods themselves: see the [security model](security.md).
+Brewlet supports `kind`, so the cluster can run locally on Docker. This configuration has no
+ingress, TLS or multi-node scheduling. The registry uses plain HTTP on the Docker network.
+For the protections that apply inside each Pod, see the [security model](security.md).

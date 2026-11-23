@@ -1,9 +1,7 @@
 # Brewlet agents
 
-[Microsoft Copilot SDK](https://github.com/microsoft/copilot-sdk) agents in **Java, Node.js, Python
-and .NET**, running on a local Kubernetes cluster with
-[Brewlet](https://github.com/microsoft/brewlet), built to be shown: in a blog post, a video, a demo
-or a workshop.
+Eight [Microsoft Copilot SDK](https://github.com/microsoft/copilot-sdk) agents in **Java, Node.js,
+Python and .NET** run on a local Kubernetes cluster with [Brewlet](https://github.com/microsoft/brewlet).
 
 ## The idea in one picture
 
@@ -52,10 +50,8 @@ flowchart LR
 2. **Compare the frameworks.** The same [Runtime Concierge](contract.md) in Spring Boot, Quarkus,
    Micronaut, NestJS, Fastify, FastAPI, Django and ASP.NET Core, side by side in
    [the agents overview](agents/index.md).
-3. **Watch Ops patch a runtime.** The [rotation demo](rotation.md) updates the JDK under three Java
-   frameworks without rebuilding any of them.
-4. **Present it.** The [DevRel kit](devrel/index.md) has a 10-minute demo script, a 90-minute workshop
-   and blog and video outlines.
+3. **Patch the Java runtime.** Follow the [runtime rotation guide](rotation.md) to update the JDK
+   for all three Java agents without rebuilding their artifacts.
 
 ## Where to read next
 

@@ -36,11 +36,11 @@ Micronaut, NestJS, Fastify, FastAPI, Django and ASP.NET Core.
 | Question | Short answer | Where it comes from |
 |----------|--------------|---------------------|
 | "Why not put the dependencies in the runtime?" | A runtime id is a promise to every application on it. Framework libraries would make every upgrade an Ops change and every Ops change a risk for every application. | [Design](../design.md#1-a-fat-runtime-that-contains-the-framework-dependencies) |
-| "Does rotating the runtime patch my libraries?" | No, and Brewlet says so itself. A CVE in Jackson or `node_modules` lives under `/app`, so it needs a rebuild of the artifact. The split makes that boundary visible. | [Design](../design.md#consequences-you-should-say-out-loud) |
+| "Does rotating the runtime patch my libraries?" | No, and Brewlet says so itself. A CVE in Jackson or `node_modules` lives under `/app`, so it needs a rebuild of the artifact. The split makes that boundary visible. | [Design](../design.md#operational-trade-offs) |
 | "Is that a sandbox?" | No. It is runc isolation with a locked-down Pod: non-root, no capabilities, a read-only root filesystem. Not a boundary for hostile tenants. | [Security model](../security.md) |
 | "Why a CLI per Pod?" | It keeps the trust boundary at the Pod, and a shared CLI would hold every team's credentials and conversations. It costs tens of MiB per Pod. | [Design](../design.md#3-one-copilot-cli-service-for-the-whole-cluster) |
 | "Can the model do anything it likes?" | It can call one tool, `runtime_facts`, and nothing else: not the CLI's own tools, not GitHub, not the web. | [Security model](../security.md) |
-| "Is this production ready?" | It is a showcase. It is a laptop cluster with a plain-HTTP registry and no ingress. The Pods themselves are the part meant to be taken seriously. | [Design](../design.md#why-kind-and-what-is-not-in-scope) |
+| "Is this production ready?" | No. The cluster runs locally with a plain-HTTP registry and no ingress. | [Design](../design.md#why-kind-and-what-is-not-in-scope) |
 
 ## Before you present
 
